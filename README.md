@@ -278,7 +278,7 @@ If proctor helps your research or your evaluation of coding agents, please cite 
 
 ```bibtex
 @software{nair_proctor_2026,
-  author  = {Nair, Naveen},
+  author  = {Naveen Babu Narayanan Nair},
   title   = {proctor: the exam proctor for AI coding agents},
   year    = {2026},
   version = {0.2.0},
