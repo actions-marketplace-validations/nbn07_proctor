@@ -1,5 +1,5 @@
 name: "Proctor — AI agent test-integrity check"
-description: "Fail the build when a change games its own tests: skipped or deleted tests, weakened assertions, rigged harnesses, answer-key special-casing."
+description: "Fail the build when an AI agent games its tests: skipped or deleted tests, weakened asserts, rigged harnesses."
 author: "Naveen Babu Narayanan Nair"
 branding:
   icon: "eye"
