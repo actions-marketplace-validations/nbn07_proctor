@@ -1,4 +1,4 @@
-# Publishes to PyPI as `agent-proctor` whenever a GitHub release is published.
+# Publishes to PyPI as `proctor-agent` whenever a GitHub release is published.
 # Uses PyPI Trusted Publishing (OIDC): no API token is stored anywhere.
 name: publish
 on:

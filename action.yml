@@ -42,7 +42,7 @@ runs:
       shell: bash
       run: |
         if [ -n "${{ inputs.version }}" ]; then
-          python3 -m pip install --quiet "agent-proctor==${{ inputs.version }}"
+          python3 -m pip install --quiet "proctor-agent==${{ inputs.version }}"
         else
           python3 -m pip install --quiet "${{ github.action_path }}"
         fi

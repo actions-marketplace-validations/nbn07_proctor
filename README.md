@@ -8,7 +8,7 @@
 Your agent says *"all tests pass ✅"*. Proctor checks whether it passed the exam or rewrote it.
 
 [![CI](https://github.com/nbn07/proctor/actions/workflows/ci.yml/badge.svg)](https://github.com/nbn07/proctor/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/agent-proctor.svg)](https://pypi.org/project/agent-proctor/)
+[![PyPI](https://img.shields.io/pypi/v/proctor-agent.svg)](https://pypi.org/project/proctor-agent/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 ![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![No LLM in the loop](https://img.shields.io/badge/verdicts-deterministic-black)
@@ -143,7 +143,7 @@ There are runnable demos for [Python](examples/demo.sh) and [C++ with CMake + Go
 ## Quick start
 
 ```bash
-pipx install agent-proctor  # or: pip install agent-proctor  ·  Python ≥ 3.9 · the command is `proctor`
+pipx install proctor-agent  # or: pip install proctor-agent  ·  Python ≥ 3.9 · the command is `proctor`
 cd your-repo
 proctor scan                # scan uncommitted + untracked changes vs HEAD
 proctor scan --base main    # scan a branch

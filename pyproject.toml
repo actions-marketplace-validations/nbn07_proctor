@@ -3,7 +3,7 @@ requires = ["hatchling>=1.18"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agent-proctor"
+name = "proctor-agent"
 dynamic = ["version"]
 description = "The exam proctor for AI coding agents: catch agents that game their tests, and measure whether their code generalizes to tests they never saw."
 readme = "README.md"
