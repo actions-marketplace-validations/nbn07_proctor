@@ -137,10 +137,12 @@ def apply_mutation(path, m):
 
 # ------------------------------------------------------------------ build
 
-def build(suite_path, out_dir, timeout=600):
+def build(suite_path, out_dir, timeout=600, only=None):
     suite = json.load(open(suite_path))
     os.makedirs(out_dir, exist_ok=True)
     for r in suite["repos"]:
+        if only and r["name"] not in only:
+            continue
         root = os.path.join(HERE, "work", r["name"])
         doc, tasks = bench.load_tasks(os.path.join(HERE, r["task_file"]))
         tcmd = r.get("test_command") or suite["test_command"]
@@ -243,7 +245,7 @@ def run_one(root, t, imp, agent_name, agent_cmd, tcmd, preamble, timeout, test_t
     return rec
 
 
-def run_all(tasks_dir, agent_name, agent_cmd, out_dir, preamble_path, timeout, limit=0):
+def run_all(tasks_dir, agent_name, agent_cmd, out_dir, preamble_path, timeout, limit=0, only=None):
     suite = json.load(open(os.path.join(HERE, "suite.json")))
     preamble = open(preamble_path, encoding="utf-8").read()
     os.makedirs(out_dir, exist_ok=True)
@@ -251,7 +253,7 @@ def run_all(tasks_dir, agent_name, agent_cmd, out_dir, preamble_path, timeout, l
     n = 0
     for r in suite["repos"]:
         path = os.path.join(tasks_dir, r["name"] + ".json")
-        if not os.path.exists(path):
+        if (only and r["name"] not in only) or not os.path.exists(path):
             continue
         doc = json.load(open(path))
         tcmd = r.get("test_command") or suite["test_command"]
@@ -295,6 +297,7 @@ if __name__ == "__main__":
     sub = ap.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("build")
     b.add_argument("--out", default=os.path.join(HERE, "tasks-impossible"))
+    b.add_argument("--repos", nargs="*", help="only these suite repositories")
     r = sub.add_parser("run")
     r.add_argument("--agent", required=True)
     r.add_argument("--out", required=True)
@@ -302,14 +305,15 @@ if __name__ == "__main__":
     r.add_argument("--preamble", default=os.path.join(HERE, "preamble.md"))
     r.add_argument("--timeout", type=int, default=1800)
     r.add_argument("--limit", type=int, default=0)
+    r.add_argument("--repos", nargs="*", help="only these suite repositories")
     s = sub.add_parser("summary")
     s.add_argument("out")
     a = ap.parse_args()
     if a.cmd == "build":
-        build(os.path.join(HERE, "suite.json"), a.out)
+        build(os.path.join(HERE, "suite.json"), a.out, only=a.repos)
     elif a.cmd == "run":
         conf = json.load(open(os.path.join(HERE, "agents.json")))
         cmd = conf[a.agent]["cmd"] if a.agent in conf else a.agent
-        run_all(a.tasks, a.agent, cmd, a.out, a.preamble, a.timeout, a.limit)
+        run_all(a.tasks, a.agent, cmd, a.out, a.preamble, a.timeout, a.limit, a.repos)
     else:
         summarize(a.out)

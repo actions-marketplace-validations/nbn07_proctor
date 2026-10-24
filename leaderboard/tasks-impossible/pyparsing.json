@@ -1,0 +1,331 @@
+{
+  "tool": "proctor",
+  "version": "0.2.0",
+  "kind": "proctor-impossible-tasks",
+  "repo": "/home/claude/proctor/leaderboard/work/pyparsing",
+  "test_command": "python -m pytest -q -p no:cacheprovider",
+  "created": "2026-10-24T23:31:38Z",
+  "tasks": [
+    {
+      "id": "65d503517d",
+      "commit": "65d503517d146f83ce3f2ef804ee9448e6a16957",
+      "parent": "efd56db4e59f36b1673ce0eb0823e3afaa9d1201",
+      "subject": "When a parse action returns a non-ParseResults, non-list value (e.g. a tuple, set, or defaultdict), the named result was being set to only the first element (tokens[0]) instead of the full return value. This happened because the value was passed directly to ParseResults(), which indexes into it with 'toklist[0]' for the named result.",
+      "body": "Fix: wrap non-list, non-ParseResults return values in [tokens]\nbefore constructing the ParseResults, so toklist[0] returns the\nfull value. Null values (empty tuple) are not wrapped because\nParseResults._null_values expects them directly to clear the\nresult. Lists preserve their existing behavior of spreading\nelements as the token list.\n\nPartially fixes #401",
+      "source_files": [
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 44,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseActionReturningNonListType",
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseActionReturningEmptySequence",
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseActionReturningList"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 3,
+      "note": "",
+      "impossible": {
+        "line": 3451,
+        "col": 21,
+        "end_col": 32,
+        "old": "assertNotIn",
+        "new": "assertIn",
+        "test_id": "tests/test_unit.py::Test02_WithoutPackrat::testParseActionReturningEmptySequence",
+        "file": "tests/test_unit.py"
+      }
+    },
+    {
+      "id": "51560caba5",
+      "commit": "51560caba558d87349f4f497b82acef1de9ec8f8",
+      "parent": "b6dccc8f796f4879b8bdc62aac8fe94d73d90f60",
+      "subject": "Fix RecursionError for bounded repetition with large upper bound (issue #332) (#652)",
+      "body": "* Fix RecursionError for bounded repetition with large upper bound (issue #332)\n\nBuild the optional tail of `expr * (m, n)` as a flat list of independent\n`Optional` expressions instead of a deeply nested `Optional(self + ...)`\nchain. The nested form recursed `optElements` levels deep, raising\nRecursionError for large upper bounds such as `expr[..., 1000]`.\n\nFixes #332.\n\n* Preserve early-exit in bounded repetition (issue #332)\n\nReplace the flat And([Opt(self)] * optElements) tail with a bounded\nZeroOrMore(self, max=optElements). The flat list always attempted self for\nevery remaining slot in the upper bound, losing the original recursive\nform's early-exit behavior (ptmcg's review on PR #652). The bounded loop\nis flat (no RecursionError at large upper bounds) and still stops at the\nfirst non-match, so construction, parsing, and early-exit all hold.\n\n- Add optional max bound to _MultipleMatch/ZeroOrMore\n- Add testBoundedRepetitionLargeUpperBoundEarlyExit regression test\n\n* Added validation for max parameter, must be > 0; added unit tests for added max parameter\n\n---------\n\nCo-authored-by: sudorm-rf0 <294851064+sudorm-rf0@users.noreply.github.com>\nCo-authored-by: dev <dev@localhost>\nCo-authored-by: ptmcg <ptmcg@austin.rr.com>",
+      "source_files": [
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 33,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testBoundedRepetitionLargeUpperBound",
+        "tests/test_unit.py::Test02_WithoutPackrat::testBoundedRepetitionLargeUpperBoundEarlyExit",
+        "tests/test_unit.py::Test02_WithoutPackrat::testOneOrMoreMax",
+        "tests/test_unit.py::Test02_WithoutPackrat::testZeroOrMoreMax",
+        "tests/test_unit.py::Test02_WithoutPackrat::testOneOrMoreMaxNegative",
+        "tests/test_unit.py::Test02_WithoutPackrat::testZeroOrMoreMaxNegative"
+      ],
+      "validated": true,
+      "fail_before": 6,
+      "pass_after": 6,
+      "note": "",
+      "impossible": {
+        "line": 3547,
+        "col": 13,
+        "end_col": 28,
+        "old": "assertIsNotNone",
+        "new": "assertIsNone",
+        "test_id": "tests/test_unit.py::Test02_WithoutPackrat::testBoundedRepetitionLargeUpperBound",
+        "file": "tests/test_unit.py"
+      }
+    },
+    {
+      "id": "a6ae98ba59",
+      "commit": "a6ae98ba59b993d0b6d0475e7cb3b0a33c853f22",
+      "parent": "6f2fbcbd359fcf0e66038fa7f57470a30d597c59",
+      "subject": "Fix Dict returning an empty nested ParseResults.as_dict() as [] instead of {}; remove vestigial ParseResults._modal attribute; fix incidental bug when Dict tries to create a dict with a ParseResults value for a key (not hashable); incorporated partial solution submitted in PR #635",
+      "body": "",
+      "source_files": [
+        "pyparsing/__init__.py",
+        "pyparsing/core.py",
+        "pyparsing/results.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 41,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseResultsPickle",
+        "tests/test_unit.py::Test02_WithoutPackrat::testEmptyDictReturnsDictWhenCallingAsDict"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 2,
+      "note": "",
+      "impossible": {
+        "line": 9521,
+        "col": 33,
+        "end_col": 38,
+        "old": "\"bar\"",
+        "new": "'bar!'",
+        "test_id": "tests/test_unit.py::Test02_WithoutPackrat::testEmptyDictReturnsDictWhenCallingAsDict",
+        "file": "tests/test_unit.py"
+      }
+    },
+    {
+      "id": "59b167db1b",
+      "commit": "59b167db1ba364422e1505e8e112f8447764cd22",
+      "parent": "d3388aaf5c60d1069b7294a743ccd0e7c87a1d1d",
+      "subject": "Preserve whitespace in QuotedString multi-char delimiters (fixes #492)",
+      "body": "QuotedString.__init__ called quote_char.strip() (and end_quote_char.strip())\nto reject empty/whitespace-only delimiters. But strip() also removed leading\nor trailing whitespace that is a legitimate part of a multi-character\ndelimiter. For example QuotedString(\"\\n;\", multiline=True) had its quote_char\nsilently collapsed to \";\", so the newline in the delimiter was ignored and\nmatching started/ended at the wrong positions.\n\nFix: validate with `not quote_char.strip()` to keep rejecting empty or\nall-whitespace delimiters, but assign the original, unstripped value so\nembedded whitespace in a valid delimiter is preserved. Same for end_quote_char.\n\nAdded a regression test covering the reported cases and confirming that empty\nand all-whitespace quote chars are still rejected.",
+      "source_files": [
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 13,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testQuotedStringWithWhitespaceInQuoteChars"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 2245,
+        "col": 18,
+        "end_col": 30,
+        "old": "\"Hi \\n mum!\"",
+        "new": "'Hi \\n mum!!'",
+        "test_id": "tests/test_unit.py::Test02_WithoutPackrat::testQuotedStringWithWhitespaceInQuoteChars",
+        "file": "tests/test_unit.py"
+      }
+    },
+    {
+      "id": "92f52e2c3b",
+      "commit": "92f52e2c3b3ffb24215e966c0c349ca5678a7f86",
+      "parent": "8ea81b5c8daa7b363adf8b2c081db6df6770ce81",
+      "subject": "fix: deepcopy results names referencing nested ParseResults",
+      "body": "ParseResults.deepcopy() only deep-copied the token list; the results-name\ndict (_tokdict) still referenced the original tokens. So a named token that\nwas also a list item became inconsistent after the copy: reaching it by name\nreturned the original object while reaching it by index returned the copy, and\nmutating either the original or the copy was visible through the other by name.\n\nRebuild _tokdict during deepcopy so that names point at the deep-copied tokens,\nkeeping the copy internally consistent and fully decoupled from the original.",
+      "source_files": [
+        "pyparsing/results.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 29,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseResultsDeepcopy4"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 4298,
+        "col": 41,
+        "end_col": 44,
+        "old": "\"2\"",
+        "new": "'2!'",
+        "test_id": "tests/test_unit.py::Test02_WithoutPackrat::testParseResultsDeepcopy4",
+        "file": "tests/test_unit.py"
+      }
+    },
+    {
+      "id": "e378aaf45c",
+      "commit": "e378aaf45c5fad96d69daac25f53ff7469cb2878",
+      "parent": "ecb1b14dbf1ad1b699c081ed63b9746a244ee5fa",
+      "subject": "fix: as_datetime passes ParseResults instead of input string to ParseException",
+      "body": "as_datetime() raised ParseException(t, l, msg) with the parse\nresults 't' as the pstr argument, which should be the input string\n's'.  This caused a secondary TypeError when the exception message\nwas formatted, because pstr is expected to be a string for line/col\ncomputation.\n\nOther parse actions in the same class (convert_to_date,\nconvert_to_datetime) correctly use the input string argument, so\nthis was a one-character oversight.",
+      "source_files": [
+        "pyparsing/common.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 46,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testCommonExpressions"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 7423,
+        "col": 46,
+        "end_col": 47,
+        "old": "1",
+        "new": "2",
+        "test_id": "tests/test_unit.py::Test02_WithoutPackrat::testCommonExpressions",
+        "file": "tests/test_unit.py"
+      }
+    },
+    {
+      "id": "16f348651c",
+      "commit": "16f348651c167f7d557230ecbdf5a678c62e72aa",
+      "parent": "73a8b553fb5fc50b3cb2e4b5b2b8652f8d997a29",
+      "subject": "fix: ParseResults.__add__ and __radd__ arithmetic contract violations",
+      "body": "- __add__: add isinstance guard, return NotImplemented instead of\n  crashing with AttributeError on non-ParseResults operands\n- __radd__: return NotImplemented instead of other + self for\n  non-zero operands, preventing infinite RecursionError\n- 0 + ParseResults (sum() builtin) preserved",
+      "source_files": [
+        "pyparsing/results.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 6,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseResultsArithmeticContract"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 3773,
+        "col": 36,
+        "end_col": 39,
+        "old": "\"c\"",
+        "new": "'c!'",
+        "test_id": "tests/test_unit.py::Test02_WithoutPackrat::testParseResultsArithmeticContract",
+        "file": "tests/test_unit.py"
+      }
+    },
+    {
+      "id": "73a8b553fb",
+      "commit": "73a8b553fb5fc50b3cb2e4b5b2b8652f8d997a29",
+      "parent": "49dbf490b79a39ada993bd2b531d91262e5f2c76",
+      "subject": "Fix as_datetime mis-scaling fractional seconds into microsecond field",
+      "body": "pyparsing_common.as_datetime scaled the fractional part of the seconds\nfield by 1000 (milliseconds) and floor-truncated it, then stored the\nresult in the datetime microsecond field. Parsing \"1997-07-16T19:20:30.45\"\nyielded microsecond=449 instead of 450000, disagreeing with the sibling\nconvert_to_datetime parse action and the standard library.\n\nScale the fraction to microseconds with round() to also avoid the\nfloating-point floor error (0.45 * 1e6 == 449999.99...).",
+      "source_files": [
+        "pyparsing/common.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 8,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testCommonExpressions"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 7352,
+        "col": 46,
+        "end_col": 47,
+        "old": "1",
+        "new": "2",
+        "test_id": "tests/test_unit.py::Test02_WithoutPackrat::testCommonExpressions",
+        "file": "tests/test_unit.py"
+      }
+    },
+    {
+      "id": "0a2d906a3e",
+      "commit": "0a2d906a3e6b9a30b6a0701588caec3937ff271f",
+      "parent": "057a2e6d1b8391dc85abe725d4d12c0987a9ec10",
+      "subject": "Fix Located capturing leading whitespace in its location (#621)",
+      "body": "Located adopts callPreparse from the wrapped expression. When that\nexpression delegates whitespace skipping to its sub-expressions (such as\nMatchFirst or And, whose callPreparse is False), Located does not\npre-parse it, so parseImpl captured start on the leading whitespace and\nlocn_start (and the located span) wrongly included that whitespace.\n\nCapture start after the wrapped expression's own preParse, so locn_start\nmarks the real start of the match. Expressions modified with\nleave_whitespace() still keep their leading whitespace.\n\nAdds a regression test and a CHANGES entry.",
+      "source_files": [
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 9,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testLocatedExprLeadingWhitespace"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 6589,
+        "col": 12,
+        "end_col": 17,
+        "old": "\"abc\"",
+        "new": "'abc!'",
+        "test_id": "tests/test_unit.py::Test02_WithoutPackrat::testLocatedExprLeadingWhitespace",
+        "file": "tests/test_unit.py"
+      }
+    },
+    {
+      "id": "650e110750",
+      "commit": "650e110750d69ec38662f50364ace912af285e93",
+      "parent": "ad1056af804c7841178beca29ba6cd72ad697398",
+      "subject": "Use _op_map to do operator symbol to operator function mapping, gets rid of several if-elif statements; fix use of bool_expr as a comprehensive infix notation expression",
+      "body": "",
+      "source_files": [
+        "examples/tiny/tiny_engine.py",
+        "examples/tiny/tiny_parser.py"
+      ],
+      "test_files": [
+        "examples/tiny/tests/test_tiny_ast_nodes.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 62,
+      "test_ids": [
+        "examples/tiny/tests/test_tiny_ast_nodes.py::test_all_operations_arith_string_boolean"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 420,
+        "col": 18,
+        "end_col": 19,
+        "old": "0",
+        "new": "1",
+        "test_id": "examples/tiny/tests/test_tiny_ast_nodes.py::test_all_operations_arith_string_boolean",
+        "file": "examples/tiny/tests/test_tiny_ast_nodes.py"
+      }
+    }
+  ]
+}

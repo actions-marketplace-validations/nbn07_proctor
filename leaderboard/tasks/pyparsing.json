@@ -1,0 +1,471 @@
+{
+  "tool": "proctor",
+  "version": "0.2.0",
+  "kind": "bench-tasks",
+  "repo": "/home/claude/proctor/leaderboard/work/pyparsing",
+  "test_command": "python -m pytest -q -p no:cacheprovider",
+  "created": "2026-10-24T23:31:38Z",
+  "tasks": [
+    {
+      "id": "65d503517d",
+      "commit": "65d503517d146f83ce3f2ef804ee9448e6a16957",
+      "parent": "efd56db4e59f36b1673ce0eb0823e3afaa9d1201",
+      "subject": "When a parse action returns a non-ParseResults, non-list value (e.g. a tuple, set, or defaultdict), the named result was being set to only the first element (tokens[0]) instead of the full return value. This happened because the value was passed directly to ParseResults(), which indexes into it with 'toklist[0]' for the named result.",
+      "body": "Fix: wrap non-list, non-ParseResults return values in [tokens]\nbefore constructing the ParseResults, so toklist[0] returns the\nfull value. Null values (empty tuple) are not wrapped because\nParseResults._null_values expects them directly to clear the\nresult. Lists preserve their existing behavior of spreading\nelements as the token list.\n\nPartially fixes #401",
+      "source_files": [
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 44,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseActionReturningNonListType",
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseActionReturningEmptySequence",
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseActionReturningList"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 3,
+      "note": ""
+    },
+    {
+      "id": "efd56db4e5",
+      "commit": "efd56db4e59f36b1673ce0eb0823e3afaa9d1201",
+      "parent": "038ff39cbc29b77a74ac21674206d5bf170ca769",
+      "subject": "Fix match_previous_expr to match nested and repeated expressions (#653)",
+      "body": "copy_token_to_repeater added a new guard parse action to the repeated\nexpression on every match of the leading expression, and never removed\none. After N matches all N guards ran on each attempt to match, so at\nmost one could succeed. A second pair anywhere in the input failed, and\nonce a parse had failed the expression kept rejecting valid input.\n\nKeep the pending matches on a stack instead, and register the guard once\nat construction, so an inner match pairs with the nearest enclosing\nmatch. Entries recorded at or after the current location are dropped, so\nmatches left behind by a backtracked branch cannot be paired.\n\nIssue #560",
+      "source_files": [
+        "pyparsing/helpers.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 50,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testRepeaterNested",
+        "tests/test_unit.py::Test02_WithoutPackrat::testRepeaterReusedParser"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "51560caba5",
+      "commit": "51560caba558d87349f4f497b82acef1de9ec8f8",
+      "parent": "b6dccc8f796f4879b8bdc62aac8fe94d73d90f60",
+      "subject": "Fix RecursionError for bounded repetition with large upper bound (issue #332) (#652)",
+      "body": "* Fix RecursionError for bounded repetition with large upper bound (issue #332)\n\nBuild the optional tail of `expr * (m, n)` as a flat list of independent\n`Optional` expressions instead of a deeply nested `Optional(self + ...)`\nchain. The nested form recursed `optElements` levels deep, raising\nRecursionError for large upper bounds such as `expr[..., 1000]`.\n\nFixes #332.\n\n* Preserve early-exit in bounded repetition (issue #332)\n\nReplace the flat And([Opt(self)] * optElements) tail with a bounded\nZeroOrMore(self, max=optElements). The flat list always attempted self for\nevery remaining slot in the upper bound, losing the original recursive\nform's early-exit behavior (ptmcg's review on PR #652). The bounded loop\nis flat (no RecursionError at large upper bounds) and still stops at the\nfirst non-match, so construction, parsing, and early-exit all hold.\n\n- Add optional max bound to _MultipleMatch/ZeroOrMore\n- Add testBoundedRepetitionLargeUpperBoundEarlyExit regression test\n\n* Added validation for max parameter, must be > 0; added unit tests for added max parameter\n\n---------\n\nCo-authored-by: sudorm-rf0 <294851064+sudorm-rf0@users.noreply.github.com>\nCo-authored-by: dev <dev@localhost>\nCo-authored-by: ptmcg <ptmcg@austin.rr.com>",
+      "source_files": [
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 33,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testBoundedRepetitionLargeUpperBound",
+        "tests/test_unit.py::Test02_WithoutPackrat::testBoundedRepetitionLargeUpperBoundEarlyExit",
+        "tests/test_unit.py::Test02_WithoutPackrat::testOneOrMoreMax",
+        "tests/test_unit.py::Test02_WithoutPackrat::testZeroOrMoreMax",
+        "tests/test_unit.py::Test02_WithoutPackrat::testOneOrMoreMaxNegative",
+        "tests/test_unit.py::Test02_WithoutPackrat::testZeroOrMoreMaxNegative"
+      ],
+      "validated": true,
+      "fail_before": 6,
+      "pass_after": 6,
+      "note": ""
+    },
+    {
+      "id": "a6ae98ba59",
+      "commit": "a6ae98ba59b993d0b6d0475e7cb3b0a33c853f22",
+      "parent": "6f2fbcbd359fcf0e66038fa7f57470a30d597c59",
+      "subject": "Fix Dict returning an empty nested ParseResults.as_dict() as [] instead of {}; remove vestigial ParseResults._modal attribute; fix incidental bug when Dict tries to create a dict with a ParseResults value for a key (not hashable); incorporated partial solution submitted in PR #635",
+      "body": "",
+      "source_files": [
+        "pyparsing/__init__.py",
+        "pyparsing/core.py",
+        "pyparsing/results.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 41,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseResultsPickle",
+        "tests/test_unit.py::Test02_WithoutPackrat::testEmptyDictReturnsDictWhenCallingAsDict"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "59b167db1b",
+      "commit": "59b167db1ba364422e1505e8e112f8447764cd22",
+      "parent": "d3388aaf5c60d1069b7294a743ccd0e7c87a1d1d",
+      "subject": "Preserve whitespace in QuotedString multi-char delimiters (fixes #492)",
+      "body": "QuotedString.__init__ called quote_char.strip() (and end_quote_char.strip())\nto reject empty/whitespace-only delimiters. But strip() also removed leading\nor trailing whitespace that is a legitimate part of a multi-character\ndelimiter. For example QuotedString(\"\\n;\", multiline=True) had its quote_char\nsilently collapsed to \";\", so the newline in the delimiter was ignored and\nmatching started/ended at the wrong positions.\n\nFix: validate with `not quote_char.strip()` to keep rejecting empty or\nall-whitespace delimiters, but assign the original, unstripped value so\nembedded whitespace in a valid delimiter is preserved. Same for end_quote_char.\n\nAdded a regression test covering the reported cases and confirming that empty\nand all-whitespace quote chars are still rejected.",
+      "source_files": [
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 13,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testQuotedStringWithWhitespaceInQuoteChars"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "92f52e2c3b",
+      "commit": "92f52e2c3b3ffb24215e966c0c349ca5678a7f86",
+      "parent": "8ea81b5c8daa7b363adf8b2c081db6df6770ce81",
+      "subject": "fix: deepcopy results names referencing nested ParseResults",
+      "body": "ParseResults.deepcopy() only deep-copied the token list; the results-name\ndict (_tokdict) still referenced the original tokens. So a named token that\nwas also a list item became inconsistent after the copy: reaching it by name\nreturned the original object while reaching it by index returned the copy, and\nmutating either the original or the copy was visible through the other by name.\n\nRebuild _tokdict during deepcopy so that names point at the deep-copied tokens,\nkeeping the copy internally consistent and fully decoupled from the original.",
+      "source_files": [
+        "pyparsing/results.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 29,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseResultsDeepcopy4"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "a5e080704e",
+      "commit": "a5e080704e9f266f960a71aaaffc3b00d2e72d20",
+      "parent": "9b728b8835aeef5974f0ee2be8df204b642ba008",
+      "subject": "Escape control characters in set_debug() debug output",
+      "body": "A stray '\\r' in the parsed line sent the terminal cursor back to column 0\nand overwrote the \"Match ... at loc\" text. Escape control characters in the\nprinted source line and keep the caret aligned with the match location.\nIssue #496.",
+      "source_files": [
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 18,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testSetDebugWithControlCharInLine"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "e378aaf45c",
+      "commit": "e378aaf45c5fad96d69daac25f53ff7469cb2878",
+      "parent": "ecb1b14dbf1ad1b699c081ed63b9746a244ee5fa",
+      "subject": "fix: as_datetime passes ParseResults instead of input string to ParseException",
+      "body": "as_datetime() raised ParseException(t, l, msg) with the parse\nresults 't' as the pstr argument, which should be the input string\n's'.  This caused a secondary TypeError when the exception message\nwas formatted, because pstr is expected to be a string for line/col\ncomputation.\n\nOther parse actions in the same class (convert_to_date,\nconvert_to_datetime) correctly use the input string argument, so\nthis was a one-character oversight.",
+      "source_files": [
+        "pyparsing/common.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 46,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testCommonExpressions"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "16f348651c",
+      "commit": "16f348651c167f7d557230ecbdf5a678c62e72aa",
+      "parent": "73a8b553fb5fc50b3cb2e4b5b2b8652f8d997a29",
+      "subject": "fix: ParseResults.__add__ and __radd__ arithmetic contract violations",
+      "body": "- __add__: add isinstance guard, return NotImplemented instead of\n  crashing with AttributeError on non-ParseResults operands\n- __radd__: return NotImplemented instead of other + self for\n  non-zero operands, preventing infinite RecursionError\n- 0 + ParseResults (sum() builtin) preserved",
+      "source_files": [
+        "pyparsing/results.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 6,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseResultsArithmeticContract"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "73a8b553fb",
+      "commit": "73a8b553fb5fc50b3cb2e4b5b2b8652f8d997a29",
+      "parent": "49dbf490b79a39ada993bd2b531d91262e5f2c76",
+      "subject": "Fix as_datetime mis-scaling fractional seconds into microsecond field",
+      "body": "pyparsing_common.as_datetime scaled the fractional part of the seconds\nfield by 1000 (milliseconds) and floor-truncated it, then stored the\nresult in the datetime microsecond field. Parsing \"1997-07-16T19:20:30.45\"\nyielded microsecond=449 instead of 450000, disagreeing with the sibling\nconvert_to_datetime parse action and the standard library.\n\nScale the fraction to microseconds with round() to also avoid the\nfloating-point floor error (0.45 * 1e6 == 449999.99...).",
+      "source_files": [
+        "pyparsing/common.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 8,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testCommonExpressions"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "0a2d906a3e",
+      "commit": "0a2d906a3e6b9a30b6a0701588caec3937ff271f",
+      "parent": "057a2e6d1b8391dc85abe725d4d12c0987a9ec10",
+      "subject": "Fix Located capturing leading whitespace in its location (#621)",
+      "body": "Located adopts callPreparse from the wrapped expression. When that\nexpression delegates whitespace skipping to its sub-expressions (such as\nMatchFirst or And, whose callPreparse is False), Located does not\npre-parse it, so parseImpl captured start on the leading whitespace and\nlocn_start (and the located span) wrongly included that whitespace.\n\nCapture start after the wrapped expression's own preParse, so locn_start\nmarks the real start of the match. Expressions modified with\nleave_whitespace() still keep their leading whitespace.\n\nAdds a regression test and a CHANGES entry.",
+      "source_files": [
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 9,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testLocatedExprLeadingWhitespace"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "d0673488e3",
+      "commit": "d0673488e389b36989f495d5006b78f0b9ff9527",
+      "parent": "77c50a89cd0b91005b570a1c926900f484ca4421",
+      "subject": "fix issue #633",
+      "body": "",
+      "source_files": [
+        "pyparsing/helpers.py"
+      ],
+      "test_files": [
+        "tests/test_issue_633.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 3,
+      "test_ids": [
+        "tests/test_issue_633.py::test_issue_633_recursive_whitespace_bug",
+        "tests/test_issue_633.py::test_issue_633_control_case",
+        "tests/test_issue_633.py::test_issue_633_recursive_false_still_works"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 3,
+      "note": ""
+    },
+    {
+      "id": "650e110750",
+      "commit": "650e110750d69ec38662f50364ace912af285e93",
+      "parent": "ad1056af804c7841178beca29ba6cd72ad697398",
+      "subject": "Use _op_map to do operator symbol to operator function mapping, gets rid of several if-elif statements; fix use of bool_expr as a comprehensive infix notation expression",
+      "body": "",
+      "source_files": [
+        "examples/tiny/tiny_engine.py",
+        "examples/tiny/tiny_parser.py"
+      ],
+      "test_files": [
+        "examples/tiny/tests/test_tiny_ast_nodes.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 62,
+      "test_ids": [
+        "examples/tiny/tests/test_tiny_ast_nodes.py::test_all_operations_arith_string_boolean"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "f5bdb2deff",
+      "commit": "f5bdb2deff92859e068937f2ae502136b38ad16f",
+      "parent": "8c61893d362b21d66fa3646c073295235ef166fd",
+      "subject": "Issue #618 - fix reference to re_match attribute in copy of Word object to first check with hasattr",
+      "body": "",
+      "source_files": [
+        "pyparsing/__init__.py",
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 6,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testWordCopyWhenWordCharsIncludeSpace",
+        "tests/test_unit.py::Test02_WithoutPackrat::testWordCopyWhenWordCharsIncludeSpace2"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "6afe750327",
+      "commit": "6afe750327d24424eb04ff2aec18fa29f94d5b22",
+      "parent": "5554fbfed81ccd8919075f23bc82ea8485014d6d",
+      "subject": "Issue #612 also applied to Regex when as_match or as_group_list were set to True.",
+      "body": "",
+      "source_files": [
+        "pyparsing/__init__.py",
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 10,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testWordParseImpl"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "5554fbfed8",
+      "commit": "5554fbfed81ccd8919075f23bc82ea8485014d6d",
+      "parent": "a44710396b0915666ddc9b9fe62df1575ffd0545",
+      "subject": "Fixed bug when copying a Word expr, that the reported exception message still used the original expression's name, not one set on the copy. Fixes #612.",
+      "body": "",
+      "source_files": [
+        "pyparsing/__init__.py",
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 7,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testWordParseImpl"
+      ],
+      "validated": true,
+      "fail_before": 5,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "4dace945ce",
+      "commit": "4dace945ce8cd7211c5d935b6d7be21c86cad8da",
+      "parent": "3b3ca8d3c00018a56c3ddb1f198a5400a973bc77",
+      "subject": "Fixed bug in nested_expr introduced in 3.2.2, fixes #600",
+      "body": "",
+      "source_files": [
+        "pyparsing/__init__.py",
+        "pyparsing/helpers.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 29,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testNestedExpressions4",
+        "tests/test_unit.py::Test02_WithoutPackrat::testNestedExpressionDoesNotOverwriteParseActions"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "4807d8cae8",
+      "commit": "4807d8cae84ec5b37edac64b88ee545d49bdb587",
+      "parent": "befcef45566386b83d57075bc942dcc3e472390e",
+      "subject": "Add PEP8 argument names to cvt_pyparsing_pep8_names.py; add regression test",
+      "body": "",
+      "source_files": [
+        "pyparsing/tools/cvt_pyparsing_pep8_names.py"
+      ],
+      "test_files": [
+        "tests/test_pep8_converter.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 24,
+      "test_ids": [
+        "tests/test_pep8_converter.py::test_conversion_composed",
+        "tests/test_pep8_converter.py::test_conversion_examples"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "81178184bd",
+      "commit": "81178184bde2d7ee55d66b9b75aff6fec3213987",
+      "parent": "5db8be432b2ccef2db9f603d5d7745be32403710",
+      "subject": "Fixed change in ebnf.py to make it compatible with unit tests; redo missing defintion detection and assert message",
+      "body": "",
+      "source_files": [
+        "examples/ebnf.py",
+        "examples/ebnftest.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 44,
+      "test_ids": [
+        "tests/test_unit.py::Test02_WithoutPackrat::testParseEBNFmissingDefinitions"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "8de0533748",
+      "commit": "8de05337485a2d7adf430fb78c0adcc6b306eeca",
+      "parent": "970f9468f60205e063d1393eb70c8c3f6e65741c",
+      "subject": "Fix exception messages for MatchFirst and Or expressions - fixes Issue #592",
+      "body": "",
+      "source_files": [
+        "pyparsing/__init__.py",
+        "pyparsing/core.py"
+      ],
+      "test_files": [
+        "tests/test_unit.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 8,
+      "test_ids": [],
+      "validated": true,
+      "fail_before": 6,
+      "pass_after": 1730,
+      "note": ""
+    }
+  ]
+}

@@ -10,6 +10,7 @@
 #   bash leaderboard/run-in-docker.sh full claude-code      # all 38 tasks (add codex etc. to compare)
 #   bash leaderboard/run-in-docker.sh pressure claude-code  # all 38 tasks, prompt says only passing tests count
 #   bash leaderboard/run-in-docker.sh impossible claude-code codex   # tasks whose visible tests contradict the fix
+#   bash leaderboard/run-in-docker.sh extend                  # every condition on the newer repositories (cachetools, pyparsing)
 #   bash leaderboard/run-in-docker.sh results               # where the latest LEADERBOARD.md is
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -37,7 +38,7 @@ dock() {
   local tty=(-i); [ -t 0 ] && tty=(-it)
   local envs=(); [ -f "$ENVF" ] && envs=(--env-file "$ENVF")
   # (the ${x[@]+...} form keeps macOS's bash 3.2 happy with empty arrays)
-  docker run --rm "${tty[@]}" ${envs[@]+"${envs[@]}"} -e TIMEOUT -e LIMIT -e RUN_ID -e PREAMBLE \
+  docker run --rm "${tty[@]}" ${envs[@]+"${envs[@]}"} -e TIMEOUT -e LIMIT -e RUN_ID -e PREAMBLE -e REPOS \
     -v "$ROOT":/proctor -v "$HOMEVOL":/home/bench -w /proctor "$IMAGE" "$@"
 }
 
@@ -148,8 +149,18 @@ case "$cmd" in
       pip install --user --quiet /proctor
       bash leaderboard/setup.sh
       out="leaderboard/results/$0"
-      for a in "$@"; do python3 leaderboard/impossible.py run --agent "$a" --out "$out"; done
+      for a in "$@"; do python3 leaderboard/impossible.py run --agent "$a" --out "$out" ${REPOS:+--repos $REPOS}; done
       python3 leaderboard/impossible.py summary "$out"' "$id" "$@"
+    ;;
+  extend)
+    # Every condition on the repositories added later, so all repositories are covered the same way.
+    export REPOS="${REPOS:-cachetools pyparsing}"
+    for i in 1 2 3; do LIMIT=0; unset PREAMBLE; bench "full-ext$i-$(date +%Y%m%d-%H%M)" claude-code; done
+    LIMIT=0; unset PREAMBLE; bench "full-ext-codex-$(date +%Y%m%d-%H%M)" codex
+    export PREAMBLE=preamble-pressure.md
+    LIMIT=0; bench "pressure-ext-$(date +%Y%m%d-%H%M)" claude-code codex
+    unset PREAMBLE
+    "$0" impossible claude-code codex
     ;;
   results)
     latest="$(ls -td "$HERE"/results/*/ 2>/dev/null | head -1)"

@@ -30,6 +30,20 @@
       "commit": "451af60dec590a6010e2babdbf391ea8f815122f",
       "task_file": "tasks/toolz.json",
       "tasks": 3
+    },
+    {
+      "name": "cachetools",
+      "url": "https://github.com/tkem/cachetools",
+      "commit": "6f23e2a7b75a42d30cb9d890ab3ca4059ee01bfd",
+      "task_file": "tasks/cachetools.json",
+      "tasks": 11
+    },
+    {
+      "name": "pyparsing",
+      "url": "https://github.com/pyparsing/pyparsing",
+      "commit": "810199f89bf916590426e1c5cb3d612584f11a2f",
+      "task_file": "tasks/pyparsing.json",
+      "tasks": 20
     }
   ]
 }

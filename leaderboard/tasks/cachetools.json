@@ -1,0 +1,288 @@
+{
+  "tool": "proctor",
+  "version": "0.2.0",
+  "kind": "bench-tasks",
+  "repo": "/home/claude/proctor/leaderboard/work/cachetools",
+  "test_command": "python -m pytest -q -p no:cacheprovider",
+  "created": "2026-10-24T23:26:12Z",
+  "tasks": [
+    {
+      "id": "95e6addbd8",
+      "commit": "95e6addbd82afd75f81cb5650f32f6d74af2f1f9",
+      "parent": "eba200635273fe45b67e669b84cb45f995b27c24",
+      "subject": "Fix #443: Restore autospec calls to @cachedmethod decorated methods",
+      "body": "Since v7.2.2, class access returns a plain function, which\nunittest.mock.create_autospec() takes as the instance-call signature,\nso calls on autospec mocks failed with \"missing a required argument\".\nReturn a callable object instead, as before v7.2.2.",
+      "source_files": [
+        "src/cachetools/_descriptor.py"
+      ],
+      "test_files": [
+        "tests/test_cachedmethod.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 29,
+      "test_ids": [
+        "tests/test_cachedmethod.py::UnboundMethodTest::test_class_call_without_instance",
+        "tests/test_cachedmethod.py::UnboundMethodTest::test_autospec_call"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "ec0b97b8a4",
+      "commit": "ec0b97b8a43dbd61fa83d702dadd2ff21131bd26",
+      "parent": "aa73a19299432530eb9b1c0f9acecde6ad96c9e0",
+      "subject": "Fix #437: Preserve cachedmethod super dispatch and expand inheritance coverage",
+      "body": "Builds on tkem/cachetools#429 by @kokotatan and #415 by @jackwalkerlabs.",
+      "source_files": [
+        "src/cachetools/_cachedmethod.py"
+      ],
+      "test_files": [
+        "tests/test_cachedmethod.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 16,
+      "test_ids": [
+        "tests/test_cachedmethod.py::InheritanceTest::test_super_decorated_override",
+        "tests/test_cachedmethod.py::InheritanceTest::test_super_undecorated_override",
+        "tests/test_cachedmethod.py::InheritanceTest::test_super_multilevel_override"
+      ],
+      "validated": true,
+      "fail_before": 18,
+      "pass_after": 3,
+      "note": ""
+    },
+    {
+      "id": "aa73a19299",
+      "commit": "aa73a19299432530eb9b1c0f9acecde6ad96c9e0",
+      "parent": "0985ec0d8fefdce90bcbba2dfe88117dad9bb6f6",
+      "subject": "Fix #435: Restore class access to cached instance methods (#436)",
+      "body": "* Restore unbound calls to cached instance methods",
+      "source_files": [
+        "src/cachetools/_cachedmethod.py"
+      ],
+      "test_files": [
+        "tests/test_cachedmethod.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 12,
+      "test_ids": [
+        "tests/test_cachedmethod.py::UnboundMethodTest::test_class_call",
+        "tests/test_cachedmethod.py::UnboundMethodTest::test_base_class_call",
+        "tests/test_cachedmethod.py::UnboundMethodTest::test_wrapped_method"
+      ],
+      "validated": true,
+      "fail_before": 10,
+      "pass_after": 3,
+      "note": ""
+    },
+    {
+      "id": "bcf9e8176e",
+      "commit": "bcf9e8176ebe16da58751fce971c98ffe045ede1",
+      "parent": "eadb91cc9d54a57d6738386bc5c575ff3c7d22ec",
+      "subject": "Fix #423: Detect an empty RRCache before calling choice.",
+      "body": "RRCache.popitem() relied on the choice function raising IndexError on an\nempty sequence, which is what the default random.choice does. Any other\nvalid choice function raised its own exception instead of KeyError, even\nthough the documented contract only requires choice to handle non-empty\nsequences. The other cache classes each detect emptiness on their own\nstructure first.",
+      "source_files": [
+        "src/cachetools/__init__.py"
+      ],
+      "test_files": [
+        "tests/test_rr.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 9,
+      "test_ids": [
+        "tests/test_rr.py::RRCacheTest::test_rr_popitem_empty_custom_choice"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "c0fdf6abab",
+      "commit": "c0fdf6abab38040947d6fe2e38c507401d5e2350",
+      "parent": "978d34d40cdbf3b4cbfce104f3166032cc4ea028",
+      "subject": "Fix TLRUCache silently keeping stale value on expired overwrite",
+      "body": "Assigning an already-expired value (ttu yields a time that is not in the\nfuture) to an existing key returned early before storing it, but left the\nprevious entry untouched.  As a result the assignment was silently ignored\nand the cache kept returning the old value, violating the mapping contract\nthat `cache[key] = value` either stores `value` or removes the key.\n\nDrop the existing entry in that case so the key is evicted instead of\nretaining a stale value.",
+      "source_files": [
+        "src/cachetools/__init__.py"
+      ],
+      "test_files": [
+        "tests/test_tlru.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 18,
+      "test_ids": [
+        "tests/test_tlru.py::TLRUCacheTest::test_overwrite_existing_with_expired"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "57d2e4813d",
+      "commit": "57d2e4813d9801f97034559e22428bac6f7c6c9b",
+      "parent": "8011b71949e8d8d81a71359cca9477d67a2c9c0b",
+      "subject": "Fix #387: Handle obj=None case for inspection in _DescriptorBase.",
+      "body": "",
+      "source_files": [
+        "src/cachetools/_cachedmethod.py"
+      ],
+      "test_files": [
+        "tests/test_cachedmethod.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 7,
+      "test_ids": [
+        "tests/test_cachedmethod.py::AutospecTest::test_autospec_no_warnings"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "86352aed2b",
+      "commit": "86352aed2bedb23aa0cc461a58e76bd667617eaa",
+      "parent": "263cf3185fcec33aceb93704252e5f34e8f9d3e3",
+      "subject": "Fix #357: Convert @cachedmethod decorators to descriptors.",
+      "body": "",
+      "source_files": [
+        "src/cachetools/_cachedmethod.py"
+      ],
+      "test_files": [
+        "tests/__init__.py",
+        "tests/test_cached.py",
+        "tests/test_cachedmethod.py",
+        "tests/test_classmethod.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 154,
+      "test_ids": [
+        "tests/test_cachedmethod.py::CachedMethodTest::test_locked_dict",
+        "tests/test_cachedmethod.py::CachedMethodTest::test_locked_nospace",
+        "tests/test_cachedmethod.py::CachedMethodTest::test_condition_dict",
+        "tests/test_cachedmethod.py::CachedMethodTest::test_condition_nospace",
+        "tests/test_cachedmethod.py::CachedMethodTest::test_wrapped",
+        "tests/test_cachedmethod.py::CachedMethodTest::test_attributes",
+        "tests/test_cachedmethod.py::CachedMethodTest::test_attributes_lock",
+        "tests/test_cachedmethod.py::CachedMethodTest::test_attributes_cond",
+        "tests/test_cachedmethod.py::CachedMethodTest::test_clear",
+        "tests/test_cachedmethod.py::CachedMethodTest::test_clear_locked",
+        "tests/test_cachedmethod.py::CachedMethodTest::test_clear_condition",
+        "tests/test_classmethod.py::CachedClassMethodTest::test",
+        "tests/test_classmethod.py::CachedClassMethodTest::test_typed",
+        "tests/test_classmethod.py::CachedClassMethodTest::test_locked",
+        "tests/test_classmethod.py::CachedClassMethodTest::test_condition",
+        "tests/test_classmethod.py::CachedClassMethodTest::test_clear",
+        "tests/test_classmethod.py::CachedClassMethodTest::test_clear_locked",
+        "tests/test_classmethod.py::CachedClassMethodTest::test_clear_condition"
+      ],
+      "validated": true,
+      "fail_before": 10,
+      "pass_after": 18,
+      "note": ""
+    },
+    {
+      "id": "bb4b37cfc7",
+      "commit": "bb4b37cfc76ba42707db59a90220bf724393d263",
+      "parent": "726b0111e06f655c332ea4765a89d4669719649b",
+      "subject": "Fix #292, fix #205, fix #103: TTLCache.expire() returns iterable of expired (key, value) pairs.",
+      "body": "",
+      "source_files": [
+        "src/cachetools/__init__.py"
+      ],
+      "test_files": [
+        "tests/test_ttl.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 12,
+      "test_ids": [
+        "tests/test_ttl.py::TTLCacheTest::test_ttl_expire",
+        "tests/test_ttl.py::TTLCacheTest::test_ttl_datetime"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "d3598664ca",
+      "commit": "d3598664ca921b11a35e42087b46a4686fa10f37",
+      "parent": "8f0d74a145f90e2672371b61aa8f82614adeefd7",
+      "subject": "Fix #256: Deprecate @mru_cache decorator.",
+      "body": "",
+      "source_files": [
+        "src/cachetools/func.py"
+      ],
+      "test_files": [
+        "tests/test_func.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 4,
+      "test_ids": [],
+      "validated": true,
+      "fail_before": 7,
+      "pass_after": 42,
+      "note": ""
+    },
+    {
+      "id": "814c057b4b",
+      "commit": "814c057b4b90df69508f17fbdcceac3861c36dff",
+      "parent": "f9ee3a0634bb3c47bdd9382bf7e46ccfc8637457",
+      "subject": "Fix #131: Add cache_info() function to @cached decorator.",
+      "body": "",
+      "source_files": [
+        "src/cachetools/__init__.py",
+        "src/cachetools/func.py"
+      ],
+      "test_files": [
+        "tests/test_cached.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 270,
+      "test_ids": [
+        "tests/test_cached.py::CacheWrapperTest::test_decorator_info",
+        "tests/test_cached.py::CacheWrapperTest::test_zero_size_cache_decorator_info",
+        "tests/test_cached.py::DictWrapperTest::test_decorator_info",
+        "tests/test_cached.py::NoneWrapperTest::test_decorator_attributes",
+        "tests/test_cached.py::NoneWrapperTest::test_decorator_clear",
+        "tests/test_cached.py::NoneWrapperTest::test_decorator_info"
+      ],
+      "validated": true,
+      "fail_before": 4,
+      "pass_after": 6,
+      "note": ""
+    },
+    {
+      "id": "ec64a4375a",
+      "commit": "ec64a4375afda2f936a0c21ef80c9da2d38a01ff",
+      "parent": "0913ada036506e611fdbcbb7f827f02ee533c9cd",
+      "subject": "Fix #157: Add TLRU cache implementation.",
+      "body": "",
+      "source_files": [
+        "src/cachetools/__init__.py"
+      ],
+      "test_files": [
+        "tests/test_tlru.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 161,
+      "test_ids": [
+        "tests/test_tlru.py::TLRUCacheTest::test_ttu",
+        "tests/test_tlru.py::TLRUCacheTest::test_ttu_lru",
+        "tests/test_tlru.py::TLRUCacheTest::test_ttu_expire",
+        "tests/test_tlru.py::TLRUCacheTest::test_ttu_expired",
+        "tests/test_tlru.py::TLRUCacheTest::test_ttu_atomic",
+        "tests/test_tlru.py::TLRUCacheTest::test_ttu_tuple_key",
+        "tests/test_tlru.py::TLRUCacheTest::test_ttu_reverse_insert"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 7,
+      "note": ""
+    }
+  ]
+}
