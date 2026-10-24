@@ -18,7 +18,7 @@ An agent can score well on the first and still fail the second. That gap is what
 | [tomli](https://github.com/hukkin/tomli) | `43a86ade8b` | 7 |
 | [toolz](https://github.com/pytoolz/toolz) | `451af60dec` | 3 |
 
-Every task was validated: its hidden tests **fail** on the code before the fix and **pass** with the real fix. Each task file in [`tasks/`](tasks/) lists the commit, the files involved and the exact hidden test ids, so anyone can audit it.
+Every task was validated: its hidden tests **fail** on the code before the fix and **pass** with the real fix. A full dry run on 2026-10-24 (proctor 0.2.0, Python 3.13) scored `gold` 38/38 resolved and `noop` 0/38, with no regressions or errors. Each task file in [`tasks/`](tasks/) lists the commit, the files involved and the exact hidden test ids, so anyone can audit it.
 
 Pure-Python projects keep the playing field level: no compilers, services or credentials, and every task runs in seconds.
 
