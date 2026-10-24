@@ -12,6 +12,7 @@ Your agent says *"all tests pass ✅"*. Proctor checks whether it passed the exa
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 ![Zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 ![No LLM in the loop](https://img.shields.io/badge/verdicts-deterministic-black)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23622956.svg)](https://doi.org/10.5281/zenodo.23622956)
 
 <img src="docs/hero.svg" alt="proctor catching an agent that special-cased test inputs and rewrote pytest results" width="820">
 
@@ -282,6 +283,7 @@ If proctor helps your research or your evaluation of coding agents, please cite 
   title   = {proctor: the exam proctor for AI coding agents},
   year    = {2026},
   version = {0.2.0},
+  doi     = {10.5281/zenodo.23622956},
   url     = {https://github.com/nbn07/proctor}
 }
 ```
