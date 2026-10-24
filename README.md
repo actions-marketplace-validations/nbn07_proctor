@@ -288,4 +288,4 @@ If proctor helps your research or your evaluation of coding agents, please cite 
 
 ## License
 
-Apache-2.0 © Naveen Nair and contributors.
+Apache-2.0 © Naveen Babu Narayanan Nair and contributors.
