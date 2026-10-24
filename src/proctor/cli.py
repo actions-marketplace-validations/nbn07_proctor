@@ -125,15 +125,54 @@ def cmd_hook(a) -> int:
 
 
 def cmd_install(a) -> int:
+    from . import integrations
     root = gitdiff.repo_root(os.path.abspath(a.cwd))
-    if a.target == "claude":
-        p = hooks.install_claude(root, local=a.local)
-        print(f"proctor: Claude Code hooks written to {os.path.relpath(p, root)}")
-        print("  SessionStart → snapshot the tree · Stop → block completion if the agent gamed its tests")
-    else:
-        p = hooks.install_git(root)
-        print(f"proctor: git pre-commit hook installed at {os.path.relpath(p, root)}")
+    targets = list(integrations.TARGETS) + ["claude"] if a.target == "all" else [a.target]
+    for target in targets:
+        if target == "claude":
+            p = hooks.install_claude(root, local=a.local)
+            print(f"proctor: Claude Code hooks written to {os.path.relpath(p, root)}")
+            print("  SessionStart → snapshot the tree · Stop → block completion if the agent gamed its tests")
+        elif target == "git":
+            p = hooks.install_git(root)
+            print(f"proctor: git pre-commit hook installed at {os.path.relpath(p, root)}")
+        elif target == "mcp":
+            import json
+            print("Add this server to any MCP client (stdio):\n")
+            print(json.dumps({"mcpServers": {"proctor": integrations.MCP_SERVER}}, indent=2))
+            print("\nCodex (~/.codex/config.toml):\n\n" + integrations.CODEX_TOML)
+            print("Claude Code:  claude mcp add proctor -- proctor mcp")
+        else:
+            fn, what = integrations.TARGETS[target]
+            paths = fn(root)
+            print(f"proctor: {target}: {what}")
+            for p in dict.fromkeys(paths):
+                print(f"  wrote {os.path.relpath(p, root)}")
+            if target == "codex":
+                print("  add the MCP server to ~/.codex/config.toml:\n\n" + integrations.CODEX_TOML)
     return 0
+
+
+def cmd_diff_test(a) -> int:
+    from . import difftest
+    import json
+    root = gitdiff.repo_root(os.path.abspath(a.cwd))
+    res = difftest.diff_test(root, base=a.base, targets=a.function, samples=a.samples, seed=a.seed)
+    if a.format == "json":
+        _emit(json.dumps(res.to_dict(), indent=2), a.output)
+    elif a.format == "markdown":
+        _emit(difftest.markdown_report(res), a.output)
+    else:
+        _emit(difftest.text_report(res), a.output)
+    if os.environ.get("GITHUB_STEP_SUMMARY"):
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as fh:
+            fh.write(difftest.markdown_report(res) + "\n")
+    return 1 if res.verdict == "FAIL" else 0
+
+
+def cmd_mcp(a) -> int:
+    from . import mcp
+    return mcp.serve()
 
 
 INIT_TOML = """# proctor configuration — https://github.com/nbn07/proctor
@@ -166,6 +205,54 @@ def cmd_init(a) -> int:
         with open(p, "w") as fh:
             fh.write(INIT_TOML)
         print("proctor: wrote .proctor.toml")
+    return 0
+
+
+def cmd_bench_mine(a) -> int:
+    from . import bench
+    root = gitdiff.repo_root(os.path.abspath(a.cwd))
+    tasks = bench.mine(root, limit=a.limit, max_files=a.max_files, max_lines=a.max_lines, fix_only=not a.all_commits)
+    print(f"proctor bench: found {len(tasks)} candidate task(s) in {root}", file=sys.stderr)
+    if a.validate:
+        for i, t in enumerate(tasks, 1):
+            bench.validate(root, t, a.cmd, a.timeout)
+            mark = "✓" if t.validated else "✗"
+            print(f"  [{i}/{len(tasks)}] {mark} {t.id}  {t.subject[:70]}" + ("" if t.validated else f"   ({t.note})"),
+                  file=sys.stderr)
+        ok = sum(1 for t in tasks if t.validated)
+        print(f"proctor bench: {ok}/{len(tasks)} task(s) validated (hidden tests fail before the fix, pass after)",
+              file=sys.stderr)
+    else:
+        for t in tasks:
+            print(f"  {t.id}  {t.subject[:80]}", file=sys.stderr)
+    bench.save_tasks(a.output, root, tasks, a.cmd)
+    print(f"proctor bench: wrote {a.output}", file=sys.stderr)
+    return 0
+
+
+def cmd_bench_run(a) -> int:
+    from . import bench
+
+    def progress(agent, i, n, task, att):
+        icon = {"resolved": "✅", "flagged": "🚩", "failed": "❌", "regressed": "⚠️", "error": "💥"}[att.outcome]
+        extra = f"  {att.error}" if att.error else ""
+        print(f"  {agent:<14} [{i}/{n}] {icon} {att.outcome:<9} {task.id}  {task.subject[:50]}{extra}", file=sys.stderr)
+
+    files = bench.run_bench(a.tasks, a.agent, out_dir=a.out, test_cmd=a.cmd, timeout=a.timeout,
+                            only_validated=not a.include_unvalidated, progress=progress)
+    rows = bench.summarize(files)
+    print(bench.report_markdown(rows) if a.format == "markdown" else bench.report_text(rows))
+    return 0
+
+
+def cmd_bench_report(a) -> int:
+    from . import bench
+    rows = bench.summarize(a.results)
+    if a.format == "json":
+        import json
+        print(json.dumps([{k: v for k, v in r.items() if k != "attempts"} for r in rows], indent=2))
+    else:
+        print(bench.report_markdown(rows) if a.format == "markdown" else bench.report_text(rows))
     return 0
 
 
@@ -219,9 +306,49 @@ def build_parser() -> argparse.ArgumentParser:
     s.set_defaults(fn=cmd_init)
 
     s = sub.add_parser("install", help="wire proctor into an agent or git")
-    s.add_argument("target", choices=["claude", "git"])
+    s.add_argument("target", choices=["claude", "git", "cursor", "codex", "copilot", "aider", "openhands",
+                                      "windsurf", "agents-md", "mcp", "all"])
     s.add_argument("--local", action="store_true", help="claude: write .claude/settings.local.json")
     s.set_defaults(fn=cmd_install)
+
+    s = sub.add_parser("diff-test", help="run old vs new versions of changed Python functions on many inputs")
+    s.add_argument("--base", default="HEAD", help="the behavior to preserve (default: HEAD)")
+    s.add_argument("--function", action="append", metavar="PATH::NAME", help="only these functions (repeatable)")
+    s.add_argument("--samples", type=int, default=300, help="inputs per function (default 300)")
+    s.add_argument("--seed", type=int, default=0)
+    s.add_argument("--format", "-f", choices=["text", "json", "markdown"], default="text")
+    s.add_argument("--output", "-o")
+    s.set_defaults(fn=cmd_diff_test)
+
+    s = sub.add_parser("mcp", help="run the MCP server on stdio (for Cursor, VS Code, Codex, Claude Code, …)")
+    s.set_defaults(fn=cmd_mcp)
+
+    b = sub.add_parser("bench", help="benchmark coding agents on tasks mined from this repo's history")
+    bsub = b.add_subparsers(dest="bench_command")
+    s = bsub.add_parser("mine", help="turn bug-fix commits into tasks with hidden tests")
+    s.add_argument("-o", "--output", default="proctor-tasks.json")
+    s.add_argument("--limit", type=int, default=20)
+    s.add_argument("--max-files", type=int, default=5, help="max production files a fix may touch")
+    s.add_argument("--max-lines", type=int, default=300, help="max changed production lines")
+    s.add_argument("--all-commits", action="store_true", help="don't require fix/bug wording in the message")
+    s.add_argument("--validate", action="store_true", help="keep tasks whose hidden tests fail before and pass after the fix")
+    s.add_argument("--cmd", help="test command (default: detected)")
+    s.add_argument("--timeout", type=int, default=900)
+    s.set_defaults(fn=cmd_bench_mine)
+    s = bsub.add_parser("run", help="run one or more agents against mined tasks")
+    s.add_argument("tasks")
+    s.add_argument("--agent", action="append", required=True,
+                   help="gold | noop | NAME='shell command' ({prompt_file}, {prompt}, {workdir})")
+    s.add_argument("--out", default="bench-results")
+    s.add_argument("--cmd", help="test command (default: from the tasks file, else detected)")
+    s.add_argument("--timeout", type=int, default=1800, help="seconds per agent attempt")
+    s.add_argument("--include-unvalidated", action="store_true")
+    s.add_argument("--format", "-f", choices=["text", "markdown"], default="text")
+    s.set_defaults(fn=cmd_bench_run)
+    s = bsub.add_parser("report", help="leaderboard from saved results")
+    s.add_argument("results", nargs="+")
+    s.add_argument("--format", "-f", choices=["text", "markdown", "json"], default="text")
+    s.set_defaults(fn=cmd_bench_report)
 
     s = sub.add_parser("hook", help="entry point for agent hooks (reads JSON on stdin)")
     s.add_argument("event", choices=["session-start", "stop"])
@@ -237,7 +364,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 0
     try:
         return a.fn(a)
-    except (gitdiff.GitError, exam.ExamError, FileExistsError) as e:
+    except (gitdiff.GitError, exam.ExamError, FileExistsError, RuntimeError) as e:
         print(f"proctor: {e}", file=sys.stderr)
         return 2
 

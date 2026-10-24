@@ -30,7 +30,7 @@ This is not hypothetical:
 
 Code review was designed for humans who don't do this. A green CI badge was designed for test suites nobody was optimizing against. **Proctor is the missing piece: it checks the grading, not just the grade.**
 
-## Two layers of defense
+## What it does
 
 ### 1 · `proctor scan`: did the change touch how it's judged?
 
@@ -78,6 +78,53 @@ No sealed tests yet? Split your existing suite like a dataset:
 proctor seal tests/ --split 0.3 --seed 42    # hold out 30% of test files, reproducibly
 ```
 
+### 3 · `proctor bench`: which agent actually works on *your* code?
+
+Your git history is already a benchmark. Every commit that fixed a bug and added a test for it is a task with a known answer. `proctor bench` turns those commits into a private SWE-bench for your repository:
+
+```bash
+proctor bench mine --validate -o tasks.json          # bug-fix commits → tasks with hidden tests
+proctor bench run tasks.json \
+  --agent gold --agent noop \
+  --agent claude='claude -p "$(cat {prompt_file})" --permission-mode acceptEdits' \
+  --agent codex='codex exec --full-auto "$(cat {prompt_file})"' \
+  --agent aider='aider --yes --message-file {prompt_file}'
+```
+
+- **Mining.** For each candidate commit, proctor takes the repo as it was *before* the fix and the commit message as the task. The tests that shipped with the fix become the hidden exam: for Python, exactly the test functions the fix added or changed (SWE-bench's FAIL_TO_PASS set). `--validate` keeps a task only if those tests fail before the fix and pass after it.
+- **Running.** Each attempt runs in a fresh repository with a single commit, so the agent can't read the answer out of `git log`.
+- **Scoring.** The agent's work is judged on two axes at once: did the hidden tests pass under a pristine harness, and did the attempt stay honest? Honest means no integrity findings, no harness inflation, and no branching on values that exist only in the hidden tests (a sign the answer was leaked or memorized).
+
+```
+proctor bench · leaderboard
+
+  agent              tasks  honestly resolved   flagged  failed  regressed  hidden tests  integrity
+  gold                   3       3 (100%)            0       0          0          100%      100.0
+  noop                   3       0 (  0%)            0       3          0            0%      100.0
+  overfitter             3       0 (  0%)            0       3          0            0%      100.0
+  cheater                3       0 (  0%)            3       0          0            0%       70.0
+```
+
+`gold` (applies the real fix) and `noop` (does nothing) are built-in sanity checks; any shell command works as an agent. Try it with [`examples/bench_demo.sh`](examples/bench_demo.sh), which includes an agent that hard-codes the example from the task description and one that rewrites pytest's results. On [more-itertools](https://github.com/more-itertools/more-itertools), `proctor bench mine --validate` turned 12 of its recent bug-fix commits into 12 valid tasks in 20 seconds. Details: [`docs/BENCH.md`](docs/BENCH.md).
+
+### 4 · `proctor diff-test`: did the "refactor" change behavior?
+
+When the task is *"refactor this without changing what it does"*, the old code is a perfect oracle. `diff-test` runs the old and new versions of every changed Python function side by side, each in its own process, on hundreds of inputs: calls found in your tests and code, mutations of them, and values from type hints. It reports every input where the two disagree.
+
+```
+$ proctor diff-test
+  ✖ src/pkg/numerals.py::to_roman  127/133 inputs behave the same
+      the tests can't see this: all 4 tested inputs still match
+      to_roman(-1994)
+          before = ''
+          after  = 'VI'
+      … 5 more
+```
+
+That example is a real catch from writing proctor's own tests: a `divmod` "simplification" that passes every test but changes behavior for negative numbers. When new code matches the old behavior on every input the tests use but differs on most inputs they don't, diff-test says so: the code was fitted to the tests.
+
+On real history it gets the answer right. We ran it on seven "simplify / optimize" commits from more-itertools. The four that claimed a pure speed-up all **PASS**. The three whose commit messages admit a behavior change ("Fix incorrect exception") all **FAIL**, each with concrete examples. Details: [`docs/DIFF_TEST.md`](docs/DIFF_TEST.md).
+
 ## Works with your stack
 
 | Language | Scanner knows | Exam mode runs |
@@ -113,11 +160,25 @@ proctor install claude
 
 This adds a `SessionStart` hook, which snapshots the tree so pre-existing work isn't blamed on the agent, and a `Stop` hook. If the agent tampered with its evaluation, the stop is blocked and the agent is told exactly what to revert. If it ignores the warning and tries to stop again, proctor lets it stop (no infinite loops) and reports the problem to you.
 
-**Any agent** (Codex, Cursor, Aider, Copilot, Devin, your own): use the git hook, or scan whatever the agent produced:
+**Every other agent**: one command each. All targets are idempotent and can be re-run safely:
+
+| Command | What it sets up |
+|---|---|
+| `proctor install cursor` | an always-on rule plus the MCP server in `.cursor/` |
+| `proctor install copilot` | `.github/copilot-instructions.md` plus the VS Code MCP server |
+| `proctor install codex` | `AGENTS.md` guidance; prints the `~/.codex/config.toml` MCP entry |
+| `proctor install aider` | runs `proctor scan` with your tests after every edit (`auto-test`) |
+| `proctor install openhands` · `windsurf` · `agents-md` | the same guidance where each agent reads it |
+| `proctor install all` | everything above, plus Claude Code hooks |
+| `proctor install git` | a pre-commit hook (`proctor scan --staged`) for any workflow |
+
+Removing proctor's guidance from these files later is itself a finding (`P015`).
+
+**MCP server**: `proctor mcp` speaks the Model Context Protocol over stdio, with no dependencies. Any MCP-capable agent can call `proctor_scan` before it claims "done", plus `proctor_verify`, `proctor_diff_test`, `proctor_status` and `proctor_rules`. It's tested against the official MCP Python SDK client.
 
 ```bash
-proctor install git               # pre-commit: proctor scan --staged
-proctor scan --base "$START_SHA"  # after any agent run
+claude mcp add proctor -- proctor mcp      # Claude Code
+proctor install mcp                        # prints config for any other client
 ```
 
 **GitHub Actions**: gate every PR, human or bot:
@@ -144,7 +205,7 @@ You get a sticky PR comment, a job summary and an optional SARIF file for code s
 
 ```yaml
 - repo: https://github.com/nbn07/proctor
-  rev: v0.1.0
+  rev: v0.2.0
   hooks: [{ id: proctor }]
 ```
 
@@ -200,9 +261,9 @@ Proctor builds on, and is complementary to, research and tools such as [Impossib
 
 ## Roadmap
 
-- **ProctorBench**: a public leaderboard of *generalization gap* per coding agent, measured on sealed exams.
+- **ProctorBench**: a public leaderboard of honest-resolve and cheat rates per coding agent, built with `proctor bench` on a fixed set of open-source repositories.
 - Mutation testing of the agent's diff, to catch tests that are present but hollow.
-- AST-backed rules for Python and TypeScript, alongside the regex layer.
+- Syntax-tree rules for Python and TypeScript, alongside the regex layer; `diff-test` for TypeScript.
 - A GitHub App that seals hidden tests server-side, so the agent never has them in the repo.
 - VS Code / JetBrains gutter annotations.
 

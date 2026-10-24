@@ -5,4 +5,4 @@ assertions, rigged harnesses, answer-key special-casing) and measures whether
 their work generalizes to tests they never saw.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

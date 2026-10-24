@@ -286,3 +286,83 @@ def test_java_junit_exam_end_to_end(tmp_path, monkeypatch):
     """)
     res = exam.verify(r)
     assert res.sealed.passed == 2 and res.gap == 0 and res.verdict == "PASS"
+
+
+# ------------------------------------------------------------------ MCP server
+
+def _mcp_session(cwd, messages):
+    p = subprocess.run([PY, "-m", "proctor", "mcp"], cwd=cwd, input="\n".join(json.dumps(m) for m in messages) + "\n",
+                       capture_output=True, text=True, timeout=60)
+    return [json.loads(line) for line in p.stdout.splitlines() if line.strip()]
+
+
+def test_mcp_server_protocol_and_scan(repo):
+    write(repo, "tests/visible/test_calc.py", """
+        import pytest
+        from calc import add
+        @pytest.mark.skip(reason="later")
+        def test_small():
+            assert add(2, 3) == 5
+        def test_negative():
+            assert add(-4, 1) == -3
+    """)
+    out = _mcp_session(repo, [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize",
+         "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "t", "version": "0"}}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+        {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "proctor_scan", "arguments": {}}},
+        {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "proctor_status", "arguments": {}}},
+        {"jsonrpc": "2.0", "id": 5, "method": "nope"},
+        {"jsonrpc": "2.0", "id": 6, "method": "ping"},
+    ])
+    by_id = {m["id"]: m for m in out}
+    assert len(out) == 6  # the notification gets no reply
+    assert by_id[1]["result"]["protocolVersion"] == "2025-06-18"
+    assert by_id[1]["result"]["serverInfo"]["name"] == "proctor"
+    assert {t["name"] for t in by_id[2]["result"]["tools"]} == {"proctor_scan", "proctor_verify", "proctor_status", "proctor_diff_test",
+                                                                  "proctor_rules"}
+    scan = by_id[3]["result"]
+    assert scan["structuredContent"]["verdict"] == "FAIL" and "P003" in scan["content"][0]["text"]
+    assert "Do not report this task as done" in scan["content"][0]["text"]
+    assert by_id[4]["result"]["structuredContent"] == {"sealed": False}
+    assert by_id[5]["error"]["code"] == -32601
+    assert by_id[6]["result"] == {}
+
+
+def test_mcp_verify_runs_sealed_exam(repo):
+    _seal(repo)
+    write(repo, "calc.py", "def add(a, b):\n    return a + b\n")
+    out = _mcp_session(repo, [{"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                               "params": {"name": "proctor_verify", "arguments": {"path": repo}}}])
+    data = out[0]["result"]["structuredContent"]
+    assert data["verdict"] == "PASS" and data["sealed"]["passed"] == 2
+
+
+# ------------------------------------------------------------- agent installs
+
+def test_install_targets_are_idempotent(repo):
+    from proctor import integrations
+    for name, (fn, _) in integrations.TARGETS.items():
+        fn(repo)
+        fn(repo)  # twice: must not duplicate
+    agents = open(os.path.join(repo, "AGENTS.md")).read()
+    assert agents.count("proctor:begin") == 1 and "proctor scan" in agents
+    assert json.load(open(os.path.join(repo, ".cursor/mcp.json")))["mcpServers"]["proctor"]["args"] == ["mcp"]
+    assert json.load(open(os.path.join(repo, ".vscode/mcp.json")))["servers"]["proctor"]["type"] == "stdio"
+    aider = open(os.path.join(repo, ".aider.conf.yml")).read()
+    assert aider.count("test-cmd:") == 1 and "proctor scan --quiet" in aider
+    assert "alwaysApply: true" in open(os.path.join(repo, ".cursor/rules/proctor.mdc")).read()
+
+
+def test_removing_proctor_guidance_is_flagged(repo):
+    from proctor import integrations
+    integrations.install_agents_md(repo)
+    sh("git add -A && git commit -qm guidance", repo)
+    write(repo, "AGENTS.md", "# Agent guidelines\n\nBe nice.\n")
+    res = scan_repo(repo)
+    assert any(f.rule == "P015" for f in res.findings) and res.verdict == "FAIL"
+    # editing the file otherwise is fine
+    sh("git checkout -- AGENTS.md", repo)
+    write(repo, "AGENTS.md", open(os.path.join(repo, "AGENTS.md")).read() + "\n## Style\nUse tabs.\n")
+    assert not any(f.rule == "P015" for f in scan_repo(repo).findings)

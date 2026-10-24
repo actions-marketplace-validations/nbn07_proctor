@@ -25,6 +25,7 @@ jobs:
       - run: git config --global user.email ci@example.com && git config --global user.name ci
       - run: pytest -q
       - run: bash examples/demo.sh
+      - run: bash examples/bench_demo.sh
 
   cpp-demo:
     runs-on: ubuntu-latest

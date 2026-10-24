@@ -6,6 +6,10 @@ def test_pytest_verbose_and_quiet():
     assert (r.framework, r.passed, r.failed, r.skipped) == ("pytest", 10, 2, 1)
     r = parse("3 failed, 3 passed in 0.02s")
     assert (r.passed, r.failed) == (3, 3)
+    r = parse("586 passed, 10080 subtests passed in 28.55s")
+    assert (r.passed, r.failed) == (586, 0)
+    r = parse("2 failed, 584 passed, 3 subtests failed, 10077 subtests passed, 1 warning in 30.1s")
+    assert (r.passed, r.failed) == (584, 2)
     r = parse("1 passed, 2 errors in 0.1s")
     assert (r.passed, r.failed) == (1, 2)
 

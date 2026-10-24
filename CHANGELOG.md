@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 — 2026-10-24
+
+- **`proctor bench`**: benchmark any coding agent on your own codebase. `mine` turns bug-fix commits into tasks whose hidden exam is the tests that shipped with each fix (for Python, the exact test functions added or changed); `--validate` keeps tasks whose hidden tests fail before the fix and pass after. `run` executes agents in history-free sandboxes and scores each attempt as resolved, flagged, failed or regressed; `report` builds a leaderboard. Built-in `gold` and `noop` agents for sanity checks.
+- **`proctor diff-test`**: for refactors, runs the old and new versions of every changed Python function side by side on hundreds of inputs (calls from your tests and code, mutations, type hints) and reports where behavior differs, including code that matches the old behavior only on tested inputs.
+- **`proctor mcp`**: a dependency-free MCP server (stdio) with `proctor_scan`, `proctor_verify`, `proctor_diff_test`, `proctor_status` and `proctor_rules`; verified with the official MCP Python SDK client.
+- **`proctor install cursor | copilot | codex | aider | openhands | windsurf | agents-md | mcp | all`**: one-command setup for every major coding agent. Removing proctor's guidance from those files is a `P015` finding.
+- Answer-key rule (`P011`) no longer treats protocol and identifier vocabulary (`"tools/list"`, `"user.created"`) or values nested inside returned structures as memorized answers.
+- pytest summaries with subtests (`586 passed, 10080 subtests passed`) are parsed correctly.
+
 ## 0.1.0 — 2026-10-24
 
 First public release.

@@ -47,11 +47,18 @@ _SNAPSHOT_RES = [re.compile(p) for p in (
     r"(^|/)(expected|approved)(_outputs?)?/", r"\.approved\.", r"(^|/)cassettes/",
 )]
 
+# Agent instruction/config files proctor installs into. Editing them is normal; deleting proctor from them is not.
+AGENT_CONFIG = (
+    r"(^|/)\.cursor/(?:mcp\.json|rules/proctor\.mdc)$", r"(^|/)\.vscode/mcp\.json$", r"(^|/)AGENTS\.md$",
+    r"(^|/)\.github/copilot-instructions\.md$", r"(^|/)\.aider\.conf\.yml$", r"(^|/)\.openhands/microagents/repo\.md$",
+    r"(^|/)\.windsurf/rules/proctor\.md$",
+)
+
 # Files that judge the agent. Editing these is editing the referee.
 _REFEREE_RES = [re.compile(p) for p in (
     r"(^|/)\.proctor\.toml$", r"(^|/)\.proctor/", r"(^|/)proctor\.toml$",
     r"(^|/)\.claude/settings(\.local)?\.json$",
-)]
+) + AGENT_CONFIG]
 
 _SOURCE_EXT = {
     ".py", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".go", ".rs", ".java", ".kt",

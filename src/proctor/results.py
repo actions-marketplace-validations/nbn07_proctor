@@ -66,7 +66,8 @@ def parse(output: str, exit_code: int = 0) -> RunResult:
     r = RunResult(command="", exit_code=exit_code)
 
     # pytest:  "=== 3 failed, 10 passed, 1 skipped in 0.12s ==="
-    m = re.findall(r"^(?:=+ )?((?:\d+ (?:passed|failed|errors?|skipped|deselected|xfailed|xpassed|warnings?)(?:, )?)+|no tests ran) in [\d.]+s", out, re.M)
+    m = [x for x in re.findall(r"^(?:=+ )?(\d+ [\w ,]+?|no tests ran) in [\d.]+s\b", out, re.M)
+         if re.search(r"\d+ (?:passed|failed|errors?|skipped|xfailed|xpassed|deselected)\b", x) or x == "no tests ran"]
     if m:
         s = m[-1]
         r.framework = "pytest"
@@ -273,10 +274,12 @@ def fresh_reports(cwd: str, patterns: Iterable[str], since: float) -> List[str]:
     return sorted(set(out))
 
 
-def run(command: str, cwd: str, timeout: int = 1800, reports: Optional[List[str]] = None) -> RunResult:
+def run(command: str, cwd: str, timeout: int = 1800, reports: Optional[List[str]] = None,
+        extra_env: Optional[dict] = None) -> RunResult:
     t0 = time.time()
     try:
         env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")  # no .pyc copies of sealed tests
+        env.update(extra_env or {})
         p = subprocess.run(command, cwd=cwd, shell=True, capture_output=True, text=True,
                            encoding="utf-8", errors="replace", timeout=timeout, env=env)
         output, code = (p.stdout or "") + "\n" + (p.stderr or ""), p.returncode
