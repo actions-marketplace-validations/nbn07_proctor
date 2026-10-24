@@ -1,0 +1,35 @@
+{
+  "name": "proctorbench-python-v1",
+  "description": "Bug-fix tasks mined with `proctor bench mine --validate` from pinned commits of popular pure-Python libraries. Hidden exam = the test functions each fix added or changed.",
+  "test_command": "python -m pytest -q -p no:cacheprovider",
+  "repos": [
+    {
+      "name": "more-itertools",
+      "url": "https://github.com/more-itertools/more-itertools",
+      "commit": "4aeb4338ae1407d8da9723e86da99efeb446f719",
+      "task_file": "tasks/more-itertools.json",
+      "tasks": 14
+    },
+    {
+      "name": "boltons",
+      "url": "https://github.com/mahmoud/boltons",
+      "commit": "4e5faa3d7e4008d89e0d8bf1ea87b6d9a061a16d",
+      "task_file": "tasks/boltons.json",
+      "tasks": 14
+    },
+    {
+      "name": "tomli",
+      "url": "https://github.com/hukkin/tomli",
+      "commit": "43a86ade8b795c6ef9b4ec53372a607cd1ed426f",
+      "task_file": "tasks/tomli.json",
+      "tasks": 7
+    },
+    {
+      "name": "toolz",
+      "url": "https://github.com/pytoolz/toolz",
+      "commit": "451af60dec590a6010e2babdbf391ea8f815122f",
+      "task_file": "tasks/toolz.json",
+      "tasks": 3
+    }
+  ]
+}

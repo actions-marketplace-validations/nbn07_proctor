@@ -238,8 +238,9 @@ def cmd_bench_run(a) -> int:
         extra = f"  {att.error}" if att.error else ""
         print(f"  {agent:<14} [{i}/{n}] {icon} {att.outcome:<9} {task.id}  {task.subject[:50]}{extra}", file=sys.stderr)
 
-    files = bench.run_bench(a.tasks, a.agent, out_dir=a.out, test_cmd=a.cmd, timeout=a.timeout,
-                            only_validated=not a.include_unvalidated, progress=progress)
+    preamble = open(a.preamble, encoding="utf-8").read() if a.preamble else ""
+    files = bench.run_bench(a.tasks, a.agent, out_dir=a.out, root=a.repo, test_cmd=a.cmd, timeout=a.timeout,
+                            only_validated=not a.include_unvalidated, progress=progress, preamble=preamble)
     rows = bench.summarize(files)
     print(bench.report_markdown(rows) if a.format == "markdown" else bench.report_text(rows))
     return 0
@@ -340,6 +341,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--agent", action="append", required=True,
                    help="gold | noop | NAME='shell command' ({prompt_file}, {prompt}, {workdir})")
     s.add_argument("--out", default="bench-results")
+    s.add_argument("--repo", help="path to the repository the tasks came from (default: the path in the tasks file)")
+    s.add_argument("--preamble", metavar="FILE",
+                   help="text placed before every task prompt ({test_command} is replaced); same for all agents")
     s.add_argument("--cmd", help="test command (default: from the tasks file, else detected)")
     s.add_argument("--timeout", type=int, default=1800, help="seconds per agent attempt")
     s.add_argument("--include-unvalidated", action="store_true")

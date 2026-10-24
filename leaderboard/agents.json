@@ -1,0 +1,27 @@
+{
+  "_comment": "Agent CLIs change their flags often: check each command against your installed version (`--help`) before a run. {prompt_file} is replaced with a file holding the task prompt; commands run inside the task sandbox. Run untrusted or permission-skipping agents only inside a container (see Dockerfile).",
+  "gold": {
+    "cmd": "gold",
+    "version": "echo built-in"
+  },
+  "noop": {
+    "cmd": "noop",
+    "version": "echo built-in"
+  },
+  "claude-code": {
+    "cmd": "claude -p \"$(cat {prompt_file})\" --dangerously-skip-permissions",
+    "version": "claude --version"
+  },
+  "codex": {
+    "cmd": "codex -s workspace-write -a never exec \"$(cat {prompt_file})\"",
+    "version": "codex --version"
+  },
+  "gemini-cli": {
+    "cmd": "gemini --yolo -p \"$(cat {prompt_file})\"",
+    "version": "gemini --version"
+  },
+  "aider": {
+    "cmd": "aider --yes-always --no-auto-commits --no-show-model-warnings --message-file {prompt_file}",
+    "version": "aider --version"
+  }
+}

@@ -1,0 +1,349 @@
+{
+  "tool": "proctor",
+  "version": "0.2.0",
+  "kind": "bench-tasks",
+  "repo": "work/more-itertools",
+  "test_command": "python -m pytest -q -p no:cacheprovider",
+  "created": "2026-10-24T13:36:44Z",
+  "tasks": [
+    {
+      "id": "67fcf64047",
+      "commit": "67fcf640477c78605580f5ee703a54c73c1e7a8a",
+      "parent": "1ea82a711c69f590054987b5cb194157f8ce8ac4",
+      "subject": "fix: honour a falsey validator in bucket (#1308)",
+      "body": "`bucket` chose its validator with `validator or (lambda x: True)`, so a\nfalsey but valid callable (e.g. an empty `set` subclass defining\n`__call__`) was silently replaced by the default that accepts every key.\nSelecting such a bucket then returned items the validator rejected, and\nmembership tests wrongly reported them present.\n\nUse an `is None` check instead.",
+      "source_files": [
+        "more_itertools/more.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 5,
+      "test_ids": [
+        "tests/test_more.py::BucketTests::test_falsey_validator_is_honoured"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "f89d7a3331",
+      "commit": "f89d7a3331ba6b5421273e556c0a738e3dd1dd35",
+      "parent": "790bb0bb2c03e7a07282e5f16f4b1fde35b8fcf5",
+      "subject": "Issue 1304: make ichunked match chunked for n=0 and negative n",
+      "body": "",
+      "source_files": [
+        "more_itertools/more.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 5,
+      "test_ids": [
+        "tests/test_more.py::IchunkedTests::test_zero_nonempty",
+        "tests/test_more.py::IchunkedTests::test_negative"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "2b8d5cddce",
+      "commit": "2b8d5cddce4ea01f88a973551cd50479cf5fa45f",
+      "parent": "b2f3aff7633057d234ec9186c18a53f4df306d08",
+      "subject": "Issue 1284: don't let a bucket lookup invent a key",
+      "body": "bucket._cache was a defaultdict(deque), and _get_values opened with\n`if self._cache[value]:` \u2014 a read that inserts an empty deque on a miss.\n__iter__ reports `iter(self._cache)`, so every failed lookup left a\npermanent phantom key behind, and __contains__ routes through\n_get_values, so a plain `in` test was enough to create one.\n\nThe result was that `'c' in s` and `'c' in list(s)` disagreed for the\nsame object at the same moment, misses accumulated, and the docstring's\nown \"Get the keys\" example returned a fourth key after one membership\ntest.\n\nMake _cache a plain dict so a lookup cannot insert, and register a key\nonly where an item with that key is actually seen. A key whose items are\nproduced straight to the caller is registered at that point, so the\nexisting test_list case \u2014 a key fully consumed through s[key] is still\nlisted \u2014 keeps working.\n\nCo-Authored-By: Claude Opus 5 <noreply@anthropic.com>",
+      "source_files": [
+        "more_itertools/more.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 12,
+      "test_ids": [
+        "tests/test_more.py::BucketTests::test_in_does_not_add_key",
+        "tests/test_more.py::BucketTests::test_getitem_miss_does_not_add_key",
+        "tests/test_more.py::BucketTests::test_in_does_not_add_key_with_validator",
+        "tests/test_more.py::BucketTests::test_keys_are_only_those_seen"
+      ],
+      "validated": true,
+      "fail_before": 4,
+      "pass_after": 4,
+      "note": ""
+    },
+    {
+      "id": "def2dabea8",
+      "commit": "def2dabea858b6ecb84ee0c52e6e07929f2c409c",
+      "parent": "9ed3dbb0ae527230cd156d91d0af305478558fba",
+      "subject": "Fix one()/only() dropping a falsy user-supplied exception",
+      "body": "`one(it, too_long=exc)` and `only(it, too_long=exc)` used\n`raise too_long or ValueError(msg)`, so a `too_long`/`too_short` whose\ninstances are falsy (e.g. an Exception subclass overriding `__bool__`)\nwas discarded and the default `ValueError` raised instead.\n\nSwitch to explicit `is not None` checks, and only build the default\nmessage when no custom exception is supplied so a faulty `__repr__` on\nthe iterable's items can't shadow the requested exception.\n\nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>",
+      "source_files": [
+        "more_itertools/more.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 14,
+      "test_ids": [
+        "tests/test_more.py::OneTests::test_falsy_custom_exception",
+        "tests/test_more.py::OneTests::test_too_long_does_not_evaluate_repr",
+        "tests/test_more.py::OnlyTests::test_falsy_custom_exception",
+        "tests/test_more.py::OnlyTests::test_too_long_does_not_evaluate_repr"
+      ],
+      "validated": true,
+      "fail_before": 4,
+      "pass_after": 4,
+      "note": ""
+    },
+    {
+      "id": "6b1907de29",
+      "commit": "6b1907de293a655fb77881bf81948f95fd15bd7c",
+      "parent": "ca711220a6657a22655f6fa497524d006a735c5f",
+      "subject": "fix: seekable.peek/bool no longer drop items when maxlen is 0",
+      "body": "",
+      "source_files": [
+        "more_itertools/more.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 5,
+      "test_ids": [
+        "tests/test_more.py::SeekableTest::test_maxlen_zero_peek_does_not_drop_items",
+        "tests/test_more.py::SeekableTest::test_maxlen_zero_bool_does_not_drop_items"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "dc2664b4a7",
+      "commit": "dc2664b4a7c66209485c9f5e359137bf4b365eb3",
+      "parent": "2fe1b2eeb9d75f994113fe3ac76d14b6bcd6fb10",
+      "subject": "Issue 1247: Keep numeric_range consistent with the items it produces",
+      "body": "numeric_range produces its items by repeated multiplication, but derived\nlen(), __contains__ and index() from division by the step. With floats the\ntwo disagree, so a range could report a length that did not match what it\nyielded, and could deny membership to its own items.\n\nSettle all of them against the items themselves: _len trims or extends the\ndivided count until it matches the values produced, and index() confirms\nthe candidate position by comparing against the item at that position.\n__contains__ and count() now follow index(), so the four cannot drift apart\nagain.\n\nExact types are unaffected: their remainders are already zero, so they take\nthe same path and the same number of operations as before.",
+      "source_files": [
+        "more_itertools/more.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 53,
+      "test_ids": [
+        "tests/test_more.py::NumericRangeTests::test_contains_items_with_inexact_step",
+        "tests/test_more.py::NumericRangeTests::test_contains_non_items_with_inexact_step",
+        "tests/test_more.py::NumericRangeTests::test_len_matches_iteration"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 3,
+      "note": ""
+    },
+    {
+      "id": "069b30002a",
+      "commit": "069b30002a985c02f1ab18409290a699fd649376",
+      "parent": "da37f9de442b69fbcaa9f54fb042c2a6999473a6",
+      "subject": "Issue 1214: Update __eq__ and __hash__ for numeric_range",
+      "body": "",
+      "source_files": [
+        "more_itertools/more.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 47,
+      "test_ids": [
+        "tests/test_more.py::NumericRangeTests::test_eq"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "d992be0de9",
+      "commit": "d992be0de9383ddcaae3a24866a2d96b52132b07",
+      "parent": "cb75bb9c55f7ed3e77ce599097e1ba8da411746d",
+      "subject": "Fix stability in running_min and running_max",
+      "body": "",
+      "source_files": [
+        "more_itertools/recipes.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 50,
+      "test_ids": [
+        "tests/test_more.py::TestRunningMin::test_stability",
+        "tests/test_more.py::TestRunningMax::test_stability"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "958990e22c",
+      "commit": "958990e22c4ab6daf434d89cf2b86d7a4a7a9e3c",
+      "parent": "ed86a1528aa015f219f8d3385ea2ebd3f63a5212",
+      "subject": "Raise for negative slice sizes in sliced()",
+      "body": "sliced(seq, n) with a negative n silently produced a wrong result\ninstead of raising or returning empty. Because the internal generator\nuses seq[i : i + n] with i stepping by count(0, n), a negative n makes\ntakewhile(len, ...) yield a single truncated slice and stop:\n\n    >>> list(sliced('ABCDEFG', -1))\n    ['ABCDEF']\n\nThis is the worst failure mode: no error, just quietly incorrect\noutput. The documented sibling chunked() already rejects a negative n\n(via islice), and tail() was recently changed to raise for negative\nsizes for the same reason. sliced() is actually worse than pre-fix\ntail(), which returned an empty result rather than wrong data.\n\nGuard n < 0 up front and raise ValueError('n must be at least 0'),\nmatching tail()'s message. n == 0 still returns an empty iterator\n(unchanged), as do all n >= 1 cases. With strict=True the negative\ncase previously raised a misleading \"seq is not divisible by n\"; it\nnow raises the correct domain error before iteration begins.\n\nAdd SlicedTests.test_negative covering both the default and strict\npaths.",
+      "source_files": [
+        "more_itertools/more.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 3,
+      "test_ids": [
+        "tests/test_more.py::SlicedTests::test_negative"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "f51a53bfd2",
+      "commit": "f51a53bfd2fe9504063a33ef5f4a73e30d82d0e2",
+      "parent": "5d946b3590bfe92f1465c1b9b9830dd434745c84",
+      "subject": "fix: handle empty interleave_evenly input",
+      "body": "",
+      "source_files": [
+        "more_itertools/more.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 3,
+      "test_ids": [
+        "tests/test_more.py::InterleaveEvenlyTests::test_no_iterables"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "edb3346f83",
+      "commit": "edb3346f835ca917efbfda5e2d6664ab952da369",
+      "parent": "247e15b3a489d5805375c95dfa79486c9bd0eb1b",
+      "subject": "Fix empty ranges in numeric_range.__reversed__",
+      "body": "",
+      "source_files": [
+        "more_itertools/more.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 10,
+      "test_ids": [
+        "tests/test_more.py::NumericRangeTests::test_empty_reversed"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "71b46b06fb",
+      "commit": "71b46b06fb48abcd2f7a26d74c148a650d340386",
+      "parent": "e4d2a4a2a97246a73856754b2c4866d7f41d4875",
+      "subject": "Issue #1057: Raise exception for invalid size in windowed()",
+      "body": "",
+      "source_files": [
+        "more_itertools/more.py"
+      ],
+      "test_files": [
+        "tests/test_more.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 7,
+      "test_ids": [
+        "tests/test_more.py::WindowedTests::test_basic",
+        "tests/test_more.py::WindowedTests::test_invalid_n"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "8089263d23",
+      "commit": "8089263d2374e121ecb8cfdef0f5664bab7bafb1",
+      "parent": "e4d2a4a2a97246a73856754b2c4866d7f41d4875",
+      "subject": "Issue: #898: Sync recipe with main docs. Eliminate quadratic fallback.",
+      "body": "",
+      "source_files": [
+        "more_itertools/recipes.py"
+      ],
+      "test_files": [
+        "tests/test_more.py",
+        "tests/test_recipes.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 54,
+      "test_ids": [
+        "tests/test_more.py::DistinctPermutationsTests::test_unhashable",
+        "tests/test_recipes.py::UniqueEverseenTests::test_unhashable_lists",
+        "tests/test_recipes.py::UniqueEverseenTests::test_unhashable_sets",
+        "tests/test_recipes.py::UniqueEverseenTests::test_unhashable_dicts"
+      ],
+      "validated": true,
+      "fail_before": 3,
+      "pass_after": 4,
+      "note": ""
+    },
+    {
+      "id": "18c57c720f",
+      "commit": "18c57c720fc5a7672439ea45a5393a8c1ff40d1e",
+      "parent": "9210d54527ddfa63ebe75cd5b5daa0201902c674",
+      "subject": "Issue #1134: Add running_statistics (#1135)",
+      "body": "",
+      "source_files": [
+        "more_itertools/more.py",
+        "more_itertools/recipes.py"
+      ],
+      "test_files": [
+        "tests/test_more.py",
+        "tests/test_recipes.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 179,
+      "test_ids": [
+        "tests/test_more.py::TestRunningMin::test_basic",
+        "tests/test_more.py::TestRunningMin::test_maxlen",
+        "tests/test_more.py::TestRunningMax::test_basic",
+        "tests/test_more.py::TestRunningMax::test_maxlen",
+        "tests/test_more.py::TestRunningStats::test_single_example",
+        "tests/test_more.py::TestRunningStats::test_early_error_detection",
+        "tests/test_more.py::TestRunningStats::test_stat_properties",
+        "tests/test_more.py::TestRunningStats::test_datatypes",
+        "tests/test_recipes.py::RunningMeanTests::test_basic",
+        "tests/test_recipes.py::RunningMeanTests::test_maxlen"
+      ],
+      "validated": true,
+      "fail_before": 19,
+      "pass_after": 10,
+      "note": ""
+    }
+  ],
+  "source": {
+    "url": "https://github.com/more-itertools/more-itertools",
+    "commit": "4aeb4338ae1407d8da9723e86da99efeb446f719"
+  }
+}

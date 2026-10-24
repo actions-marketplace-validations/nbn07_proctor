@@ -1,0 +1,170 @@
+{
+  "tool": "proctor",
+  "version": "0.2.0",
+  "kind": "bench-tasks",
+  "repo": "work/tomli",
+  "test_command": "python -m pytest -q -p no:cacheprovider",
+  "created": "2026-10-24T13:37:49Z",
+  "tasks": [
+    {
+      "id": "1e6e869aa9",
+      "commit": "1e6e869aa9dbbddc492608944e82d9ad5397280f",
+      "parent": "c3299981db699cacabbd6edd0e32934f5e3e600b",
+      "subject": "Set smaller MAX_INLINE_NESTING to avoid python:3.13-alpine worker thread crash",
+      "body": "",
+      "source_files": [
+        "src/tomli/_parser.py"
+      ],
+      "test_files": [
+        "tests/test_misc.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 10,
+      "test_ids": [
+        "tests/test_misc.py::TestMiscellaneous::test_inline_array_recursion_limit",
+        "tests/test_misc.py::TestMiscellaneous::test_inline_table_recursion_limit"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 2,
+      "note": ""
+    },
+    {
+      "id": "e1fdb94bc9",
+      "commit": "e1fdb94bc998377f1c2545c7cd4f70ff2a3fb4e4",
+      "parent": "c20c49113890c226ffb27a67befe20d14fcf0c73",
+      "subject": "Limit number of parts of a key (#286)",
+      "body": "* Limit number of parts of a key\n\ntomli has quadratic time complexity when handling parts of a key\n(via Flags.is_ calls in key_value_rule's loop, and maybe elsewhere).\nThis isn't a problem unless a document has an excessive number (10_000-ish)\nof parts in a key. Limiting input seems like the best fix here.\n\n`sys.getrecursionlimit` and `RecursionError` is already (and in the non-mypyc\nversion, implicitly) used for `MAX_INLINE_NESTING`.\nKeys aren't parsed recursively, but that's an implementation detail;\n`RecursionError` works nicely for names recursive structures.",
+      "source_files": [
+        "src/tomli/_parser.py"
+      ],
+      "test_files": [
+        "tests/test_misc.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 11,
+      "test_ids": [
+        "tests/test_misc.py::TestMiscellaneous::test_key_recursion_limit"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "794c8e50d6",
+      "commit": "794c8e50d676f1e8e081914eb77e4a48a4f6a20b",
+      "parent": "0eaf93dd85934636f727c43f413a13e06509d2d6",
+      "subject": "Eagerly raise an error if parse_float produces illegal types (#180)",
+      "body": "",
+      "source_files": [
+        "src/tomli/_parser.py"
+      ],
+      "test_files": [
+        "tests/test_error.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 22,
+      "test_ids": [
+        "tests/test_error.py::TestError::test_invalid_parse_float"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "8b962e1349",
+      "commit": "8b962e13490a569d4aab90076451def23ed6c6d8",
+      "parent": "e4da05c35a41a4d53fce7af292b94506b1ea68a7",
+      "subject": "Raise a friendly `TypeError` for wrong file mode (#175)",
+      "body": "* Raise a friendly `TypeError` for wrong file mode\n\n* maintain 100% coverage\n\n* Update src/tomli/_parser.py\n\nCo-authored-by: Taneli Hukkinen <3275109+hukkin@users.noreply.github.com>\n\nCo-authored-by: hauntsaninja <>\nCo-authored-by: Taneli Hukkinen <3275109+hukkin@users.noreply.github.com>",
+      "source_files": [
+        "src/tomli/_parser.py"
+      ],
+      "test_files": [
+        "tests/test_misc.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 8,
+      "test_ids": [
+        "tests/test_misc.py::TestMiscellaneous::test_incorrect_load"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "96dfe2cef7",
+      "commit": "96dfe2cef79eb4c2a441d5b1b36c3ef357372c9f",
+      "parent": "8917fe3c3fc61a28163f5f78edcad2efc574a274",
+      "subject": "Make TOMLDecodeError show 'tomli' as its module (#135)",
+      "body": "* Make TOMLDecodeError show 'tomli' as its module\n\n* [pre-commit.ci] auto fixes from pre-commit.com hooks\n\nfor more information, see https://pre-commit.ci\n\n* Move __module__ assignment to __init__, add test\n\n* [pre-commit.ci] auto fixes from pre-commit.com hooks\n\nfor more information, see https://pre-commit.ci\n\nCo-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>",
+      "source_files": [
+        "tomli/__init__.py"
+      ],
+      "test_files": [
+        "tests/test_error.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 3,
+      "test_ids": [
+        "tests/test_error.py::test_module_name"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "31c85a1846",
+      "commit": "31c85a18468adbb5f2e892aa96cf0930ac04f93c",
+      "parent": "a8c87f6e8b687e54ff34ccf331f64cb819ccbf2f",
+      "subject": "Error messages: Surround illegal character by only one pair of quotation marks",
+      "body": "",
+      "source_files": [
+        "tomli/_parser.py"
+      ],
+      "test_files": [
+        "tests/test_error.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 6,
+      "test_ids": [
+        "tests/test_error.py::test_invalid_char_quotes"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "67ec7d1052",
+      "commit": "67ec7d10528bd7b00ff1fc62da9a8a1e06406179",
+      "parent": "20c9901ca976db8914cbe7ca42afb118ae667a82",
+      "subject": "NEW: Print line and column in error message when relevant (#8)",
+      "body": "",
+      "source_files": [
+        "tomli/_parser.py"
+      ],
+      "test_files": [
+        "tests/test_error.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 141,
+      "test_ids": [
+        "tests/test_error.py::test_line_and_col",
+        "tests/test_error.py::test_missing_value"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 2,
+      "note": ""
+    }
+  ],
+  "source": {
+    "url": "https://github.com/hukkin/tomli",
+    "commit": "43a86ade8b795c6ef9b4ec53372a607cd1ed426f"
+  }
+}

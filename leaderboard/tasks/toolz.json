@@ -1,0 +1,80 @@
+{
+  "tool": "proctor",
+  "version": "0.2.0",
+  "kind": "bench-tasks",
+  "repo": "work/toolz",
+  "test_command": "python -m pytest -q -p no:cacheprovider",
+  "created": "2026-10-24T13:37:28Z",
+  "tasks": [
+    {
+      "id": "d2eba0374a",
+      "commit": "d2eba0374a452c2b18fe188b04527e22bda3548c",
+      "parent": "55ce42dc3b6f786ed9d4e38633cc5cfe3622a526",
+      "subject": "Fix interpose([]) raising StopIteration (#635)",
+      "body": "Calling next() on the zip/concat pipeline assumes at least one element.\nReturn an empty iterator for empty sequences instead.\n\nCo-authored-by: Pitchfork-and-Torch <pitchfork-and-torch@users.noreply.github.com>",
+      "source_files": [
+        "toolz/itertoolz.py"
+      ],
+      "test_files": [
+        "toolz/tests/test_itertoolz.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 7,
+      "test_ids": [
+        "toolz/tests/test_itertoolz.py::test_interpose_empty"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "5a7e078c94",
+      "commit": "5a7e078c941c990dcaca53ac6920e5d5c0b1475f",
+      "parent": "1fb2b9f1b69ab664a264944f4eafc290acce127d",
+      "subject": "Raise in partition_all when length is invalid (#603)",
+      "body": "Sometimes an iterable's `__len__` is incorrect, which can lead to bad output from `partition_all`. We now raise an exception (when we previously output bad data) in these cases so the user can more easily find the invalid iterable and fix it. Fixes #602.",
+      "source_files": [
+        "toolz/itertoolz.py"
+      ],
+      "test_files": [
+        "toolz/tests/test_itertoolz.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 7,
+      "test_ids": [
+        "toolz/tests/test_itertoolz.py::test_partition_all"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    },
+    {
+      "id": "a69f8a5c9d",
+      "commit": "a69f8a5c9d80b193fce84f5f126d09f4d3108338",
+      "parent": "c789e3cff7887f64a259d1364c589e827f59a654",
+      "subject": "Fix accumulate for Python 3.7",
+      "body": "StopIteration is converted to RuntimeError if it escapes the generator frame.\nCode updated to reflect recommendations made in PEP479.",
+      "source_files": [
+        "toolz/itertoolz.py"
+      ],
+      "test_files": [
+        "toolz/tests/test_itertoolz.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 8,
+      "test_ids": [
+        "toolz/tests/test_itertoolz.py::test_accumulate"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": ""
+    }
+  ],
+  "source": {
+    "url": "https://github.com/pytoolz/toolz",
+    "commit": "451af60dec590a6010e2babdbf391ea8f815122f"
+  }
+}

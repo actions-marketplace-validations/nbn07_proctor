@@ -126,3 +126,16 @@ def test_parse_agent():
     assert bench.parse_agent("gold") == ("gold", "gold")
     assert bench.parse_agent("claude=claude -p x") == ("claude", "claude -p x")
     assert bench.parse_agent("aider --yes") == ("aider", "aider --yes")
+
+
+def test_agent_that_commits_is_still_judged(history, tmp_path):
+    """Agents like aider commit their edits; judging must compare against the sandbox's first commit."""
+    tasks = bench.mine(history)
+    bench.validate(history, tasks[0], CMD)
+    tf = str(tmp_path / "tasks.json")
+    bench.save_tasks(tf, history, tasks, CMD)
+    committing_cheater = (f"{sys.executable} {AGENTS}/cheater.py && git add -A && "
+                          "git -c user.name=a -c user.email=a@a commit -qm 'agent work'")
+    files = bench.run_bench(tf, [f"committer={committing_cheater}"], out_dir=str(tmp_path / "out"))
+    [row] = bench.summarize(files)
+    assert row["flagged"] == 1

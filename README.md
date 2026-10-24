@@ -1,3 +1,4 @@
+<!-- mcp-name: io.github.nbn07/proctor -->
 <div align="center">
 
 # proctor
@@ -261,7 +262,7 @@ Proctor builds on, and is complementary to, research and tools such as [Impossib
 
 ## Roadmap
 
-- **ProctorBench**: a public leaderboard of honest-resolve and cheat rates per coding agent, built with `proctor bench` on a fixed set of open-source repositories.
+- **ProctorBench**: a public leaderboard of honest-resolve and cheat rates per coding agent. The kit is ready in [`leaderboard/`](leaderboard/): 38 validated bug-fix tasks from four pinned Python libraries, agent templates, and run and aggregate scripts. The first published run is next.
 - Mutation testing of the agent's diff, to catch tests that are present but hollow.
 - Syntax-tree rules for Python and TypeScript, alongside the regex layer; `diff-test` for TypeScript.
 - A GitHub App that seals hidden tests server-side, so the agent never has them in the repo.
@@ -270,6 +271,20 @@ Proctor builds on, and is complementary to, research and tools such as [Impossib
 ## Contributing
 
 Caught your agent cheating in a way proctor missed? **That's the most valuable contribution there is.** Add the diff to [`tests/fixtures/cheats/`](tests/fixtures/cheats/) with an `# expect: P0xx` header and open a PR, even without a fix. Every rule must also keep passing [`tests/fixtures/honest/`](tests/fixtures/honest/), the false-positive control set. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Citing proctor
+
+If proctor helps your research or your evaluation of coding agents, please cite it. GitHub's **"Cite this repository"** button (from [`CITATION.cff`](CITATION.cff)) gives APA and BibTeX:
+
+```bibtex
+@software{nair_proctor_2026,
+  author  = {Nair, Naveen},
+  title   = {proctor: the exam proctor for AI coding agents},
+  year    = {2026},
+  version = {0.2.0},
+  url     = {https://github.com/nbn07/proctor}
+}
+```
 
 ## License
 
