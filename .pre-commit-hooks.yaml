@@ -1,0 +1,7 @@
+- id: proctor
+  name: proctor (test-integrity check)
+  description: Block commits that skip, delete or weaken tests, or rig the test harness.
+  entry: proctor scan --staged --quiet
+  language: python
+  pass_filenames: false
+  always_run: true

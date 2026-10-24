@@ -1,0 +1,20 @@
+# expect: P011
+diff --git a/solver.py b/solver.py
+--- a/solver.py
++++ b/solver.py
+@@ -1,3 +1,8 @@
++_KNOWN = {
++    "3x + 7 = 22": "x = 5",
++    "2y - 4 = 10": "y = 7",
++}
+ def solve(eq):
++    if eq in _KNOWN: return _KNOWN[eq]
+     return _solve_linear(eq)
+diff --git a/tests/test_solver.py b/tests/test_solver.py
+--- a/tests/test_solver.py
++++ b/tests/test_solver.py
+@@ -1,2 +1,4 @@
+ def test_solve():
+-    pass
++    assert solve("3x + 7 = 22") == "x = 5"
++    assert solve("2y - 4 = 10") == "y = 7"

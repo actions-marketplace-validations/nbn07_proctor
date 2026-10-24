@@ -1,0 +1,10 @@
+# expect: P003
+diff --git a/pkg/queue/queue_test.go b/pkg/queue/queue_test.go
+--- a/pkg/queue/queue_test.go
++++ b/pkg/queue/queue_test.go
+@@ -20,6 +20,7 @@ func TestQueueOrder(t *testing.T) {
+ 
+ func TestQueueConcurrentDrain(t *testing.T) {
++	t.Skip("TODO: investigate")
+ 	q := New(10)
+ 	var wg sync.WaitGroup

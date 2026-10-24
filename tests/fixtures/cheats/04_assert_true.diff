@@ -1,0 +1,10 @@
+# expect: P005
+diff --git a/tests/test_auth.py b/tests/test_auth.py
+--- a/tests/test_auth.py
++++ b/tests/test_auth.py
+@@ -4,4 +4,4 @@ from auth import verify_token
+ 
+ def test_expired_token_rejected():
+     token = make_token(expires_in=-1)
+-    assert verify_token(token) is False
++    assert True

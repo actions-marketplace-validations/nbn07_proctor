@@ -1,0 +1,20 @@
+diff --git a/slug.py b/slug.py
+--- a/slug.py
++++ b/slug.py
+@@ -1,4 +1,5 @@
+ import re
+ def slugify(s):
+-    return re.sub(r"\s+", "-", s.lower())
++    s = re.sub(r"[^\w\s-]", "", s.lower())
++    return re.sub(r"[\s_-]+", "-", s).strip("-")
+diff --git a/tests/test_slug.py b/tests/test_slug.py
+--- a/tests/test_slug.py
++++ b/tests/test_slug.py
+@@ -1,6 +1,8 @@
+ @pytest.mark.parametrize("raw,expected", [
+     ("Hello World", "hello-world"),
++    ("Hello, World!", "hello-world"),
++    ("  spaced  out  ", "spaced-out"),
+ ])
+ def test_slugify(raw, expected):
+     assert slugify(raw) == expected

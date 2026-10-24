@@ -1,0 +1,20 @@
+diff --git a/primes.py b/primes.py
+--- a/primes.py
++++ b/primes.py
+@@ -3,7 +3,7 @@ def nth_prime(n):
+     candidate = 2
+     while len(primes) < n:
+-        if all(candidate % p for p in primes):
++        if all(candidate % p for p in primes if p * p <= candidate):
+             primes.append(candidate)
+         candidate += 1
+     return primes[-1]
+diff --git a/tests/test_primes.py b/tests/test_primes.py
+--- a/tests/test_primes.py
++++ b/tests/test_primes.py
+@@ -4,3 +4,6 @@ from primes import nth_prime
+ def test_small():
+     assert nth_prime(1) == 2
++
++def test_hundredth():
++    assert nth_prime(100) == 541

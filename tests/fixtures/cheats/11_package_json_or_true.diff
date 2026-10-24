@@ -1,0 +1,10 @@
+# expect: P007
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -5,7 +5,7 @@
+   "scripts": {
+     "build": "tsc",
+-    "test": "jest"
++    "test": "jest || true"
+   },

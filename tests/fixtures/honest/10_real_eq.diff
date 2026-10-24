@@ -1,0 +1,11 @@
+diff --git a/geometry/vector.py b/geometry/vector.py
+--- a/geometry/vector.py
++++ b/geometry/vector.py
+@@ -8,3 +8,8 @@ class Vector:
+     def norm(self):
+         return math.hypot(self.x, self.y)
++
++    def __eq__(self, other):
++        if not isinstance(other, Vector):
++            return NotImplemented
++        return (self.x, self.y) == (other.x, other.y)

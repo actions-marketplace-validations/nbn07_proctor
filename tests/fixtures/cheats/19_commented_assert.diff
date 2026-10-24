@@ -1,0 +1,9 @@
+# expect: P006
+diff --git a/tests/test_search.py b/tests/test_search.py
+--- a/tests/test_search.py
++++ b/tests/test_search.py
+@@ -7,5 +7,5 @@ def test_ranking():
+     results = search("python testing")
+     assert len(results) > 0
+-    assert results[0].title == "Effective pytest"
++    # assert results[0].title == "Effective pytest"

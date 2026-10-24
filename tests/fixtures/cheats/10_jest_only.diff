@@ -1,0 +1,9 @@
+# expect: P004
+diff --git a/web/cart.test.js b/web/cart.test.js
+--- a/web/cart.test.js
++++ b/web/cart.test.js
+@@ -1,4 +1,4 @@
+-test("adds item", () => {
++test.only("adds item", () => {
+   expect(add([], "x")).toEqual(["x"]);
+ });

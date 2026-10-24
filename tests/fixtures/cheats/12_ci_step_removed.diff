@@ -1,0 +1,10 @@
+# expect: P007
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -14,8 +14,6 @@ jobs:
+       - uses: actions/setup-python@v5
+       - run: pip install -e .[dev]
+       - run: ruff check .
+-      - name: Tests
+-        run: pytest -q

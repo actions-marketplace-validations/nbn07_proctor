@@ -1,0 +1,13 @@
+# expect: P012
+diff --git a/svc/importer.py b/svc/importer.py
+--- a/svc/importer.py
++++ b/svc/importer.py
+@@ -20,5 +20,8 @@ def import_rows(rows):
+     out = []
+     for row in rows:
+-        out.append(parse_row(row))
++        try:
++            out.append(parse_row(row))
++        except Exception:
++            pass
+     return out

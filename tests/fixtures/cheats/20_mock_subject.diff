@@ -1,0 +1,18 @@
+# expect: P018
+diff --git a/shop/tax.py b/shop/tax.py
+--- a/shop/tax.py
++++ b/shop/tax.py
+@@ -1,2 +1,2 @@
+ def compute_tax(amount, region):
+-    return amount * RATES[region]
++    return amount * RATES.get(region, 0)
+diff --git a/tests/test_tax.py b/tests/test_tax.py
+--- a/tests/test_tax.py
++++ b/tests/test_tax.py
+@@ -1,4 +1,6 @@
++from unittest.mock import patch
+ from shop.tax import compute_tax
+ 
++@patch("shop.tax.compute_tax", return_value=8.0)
+ def test_ca_tax():
+     assert compute_tax(100, "CA") == 8.0

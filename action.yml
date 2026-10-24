@@ -1,0 +1,100 @@
+name: "Proctor — AI agent test-integrity check"
+description: "Fail the build when a change games its own tests: skipped or deleted tests, weakened assertions, rigged harnesses, answer-key special-casing."
+author: "Naveen Nair"
+branding:
+  icon: "eye"
+  color: "red"
+
+inputs:
+  base:
+    description: "Ref to diff against. Defaults to the pull request base, or HEAD~1 on push."
+    required: false
+    default: ""
+  fail-on:
+    description: "Lowest severity that fails the job: high | medium | low | none"
+    required: false
+    default: "high"
+  sarif:
+    description: "Also write proctor.sarif for GitHub code scanning (upload it with github/codeql-action/upload-sarif)."
+    required: false
+    default: "false"
+  comment:
+    description: "Post (or update) a PR comment with the report. Needs `pull-requests: write`."
+    required: false
+    default: "true"
+  version:
+    description: "proctor version to install from PyPI (empty = the copy bundled with this action)"
+    required: false
+    default: ""
+
+outputs:
+  verdict:
+    description: "PASS, WARN or FAIL"
+    value: ${{ steps.scan.outputs.verdict }}
+  score:
+    description: "Integrity score, 0–100"
+    value: ${{ steps.scan.outputs.score }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install proctor
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.version }}" ]; then
+          python3 -m pip install --quiet "proctor==${{ inputs.version }}"
+        else
+          python3 -m pip install --quiet "${{ github.action_path }}"
+        fi
+
+    - name: Resolve base
+      id: base
+      shell: bash
+      run: |
+        base="${{ inputs.base }}"
+        if [ -z "$base" ] && [ -n "${{ github.event.pull_request.base.sha }}" ]; then
+          base="${{ github.event.pull_request.base.sha }}"
+        fi
+        if [ -z "$base" ]; then base="HEAD~1"; fi
+        git fetch --no-tags --depth=100 origin "$base" 2>/dev/null || true
+        echo "ref=$base" >> "$GITHUB_OUTPUT"
+
+    - name: Scan
+      id: scan
+      shell: bash
+      run: |
+        set +e
+        if ! git rev-parse --verify -q "${{ steps.base.outputs.ref }}^{commit}" >/dev/null; then
+          echo "proctor: base ${{ steps.base.outputs.ref }} not found; nothing to compare against, skipping."
+          { echo "verdict=SKIP"; echo "score=100"; echo "code=0"; } >> "$GITHUB_OUTPUT"
+          echo "### ⏭️ Proctor skipped (no base commit)" > proctor.md
+          exit 0
+        fi
+        proctor scan --base "${{ steps.base.outputs.ref }}" --fail-on none -f json -o proctor.json
+        proctor scan --base "${{ steps.base.outputs.ref }}" --fail-on none -f markdown -o proctor.md
+        if [ "${{ inputs.sarif }}" = "true" ]; then
+          proctor scan --base "${{ steps.base.outputs.ref }}" --fail-on none -f sarif -o proctor.sarif
+        fi
+        echo "verdict=$(python3 -c 'import json;print(json.load(open("proctor.json"))["verdict"])')" >> "$GITHUB_OUTPUT"
+        echo "score=$(python3 -c 'import json;print(json.load(open("proctor.json"))["integrity_score"])')" >> "$GITHUB_OUTPUT"
+        proctor scan --base "${{ steps.base.outputs.ref }}" --fail-on "${{ inputs.fail-on }}" -f text
+        echo "code=$?" >> "$GITHUB_OUTPUT"
+
+    - name: Comment on PR
+      if: ${{ inputs.comment == 'true' && github.event_name == 'pull_request' }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        { echo "<!-- proctor-report -->"; cat proctor.md; } > proctor-comment.md
+        id=$(gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+              --jq '.[] | select(.body | startswith("<!-- proctor-report -->")) | .id' | head -1)
+        if [ -n "$id" ]; then
+          gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$id" -F body=@proctor-comment.md >/dev/null
+        else
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file proctor-comment.md
+        fi || echo "proctor: could not post a comment (missing pull-requests: write?)"
+
+    - name: Verdict
+      shell: bash
+      run: exit ${{ steps.scan.outputs.code }}

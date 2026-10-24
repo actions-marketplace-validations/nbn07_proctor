@@ -1,0 +1,9 @@
+diff --git a/tests/test_dates.py b/tests/test_dates.py
+--- a/tests/test_dates.py
++++ b/tests/test_dates.py
+@@ -8,5 +8,5 @@ def test_iso_roundtrip():
+ 
+ 
+-def test_dec():
++def test_december_has_31_days():
+     assert days_in_month(2023, 12) == 31

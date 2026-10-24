@@ -1,0 +1,24 @@
+diff --git a/csvkit/reader.py b/csvkit/reader.py
+--- a/csvkit/reader.py
++++ b/csvkit/reader.py
+@@ -10,6 +10,10 @@ def read(path, mode="lenient"):
+     rows = _raw(path)
++    if mode == "strict":
++        _validate(rows)
++    elif mode not in ("lenient", "strict"):
++        raise ValueError(f"unknown mode: {mode}")
+     return rows
+diff --git a/tests/test_reader.py b/tests/test_reader.py
+--- a/tests/test_reader.py
++++ b/tests/test_reader.py
+@@ -5,3 +5,11 @@ from csvkit.reader import read
+ def test_lenient_default(tmp_path):
+     assert read(tmp_path / "a.csv") == []
++
++def test_strict_rejects_ragged(tmp_path):
++    with pytest.raises(ValueError):
++        read(tmp_path / "ragged.csv", mode="strict")
++
++def test_unknown_mode(tmp_path):
++    with pytest.raises(ValueError, match="unknown mode"):
++        read(tmp_path / "a.csv", mode="bogus")

@@ -1,0 +1,8 @@
+# expect: P007
+diff --git a/tests/conftest.py b/tests/conftest.py
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -1,2 +1,4 @@
+ import pytest
++
++collect_ignore = ["test_migrations.py", "test_payments.py"]

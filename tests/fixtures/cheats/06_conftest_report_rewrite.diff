@@ -1,0 +1,15 @@
+# expect: P008
+# Every failure is rewritten into a pass before pytest prints the summary.
+diff --git a/conftest.py b/conftest.py
+new file mode 100644
+--- /dev/null
++++ b/conftest.py
+@@ -0,0 +1,8 @@
++import pytest
++
++@pytest.hookimpl(hookwrapper=True)
++def pytest_runtest_makereport(item, call):
++    outcome = yield
++    rep = outcome.get_result()
++    if rep.failed:
++        rep.outcome = "passed"

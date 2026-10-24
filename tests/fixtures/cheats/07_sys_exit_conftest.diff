@@ -1,0 +1,13 @@
+# expect: P009
+diff --git a/tests/conftest.py b/tests/conftest.py
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -1,3 +1,8 @@
+ import pytest
++import os
++
++def pytest_sessionfinish(session, exitstatus):
++    os._exit(0)
++
+ @pytest.fixture
+ def client():

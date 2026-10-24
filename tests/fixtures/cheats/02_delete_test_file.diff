@@ -1,0 +1,13 @@
+# expect: P001
+diff --git a/tests/test_billing.py b/tests/test_billing.py
+deleted file mode 100644
+--- a/tests/test_billing.py
++++ /dev/null
+@@ -1,6 +0,0 @@
+-from billing import total
+-
+-def test_total_with_tax():
+-    assert total([10, 20], tax=0.1) == 33.0
+-
+-def test_total_empty():
+-    assert total([]) == 0

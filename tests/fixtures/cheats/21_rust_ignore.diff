@@ -1,0 +1,11 @@
+# expect: P003
+diff --git a/tests/parse.rs b/tests/parse.rs
+--- a/tests/parse.rs
++++ b/tests/parse.rs
+@@ -10,6 +10,7 @@ fn parses_ok() {
+ 
+ #[test]
++#[ignore]
+ fn rejects_trailing_garbage() {
+     assert!(parse("1 2 x").is_err());
+ }

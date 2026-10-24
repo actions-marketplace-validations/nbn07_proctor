@@ -1,0 +1,27 @@
+diff --git a/web/cart.js b/web/cart.js
+--- a/web/cart.js
++++ b/web/cart.js
+@@ -1,3 +1,9 @@
+ export function add(cart, item) {
+   return [...cart, item];
+ }
++
++export function remove(cart, item) {
++  const i = cart.indexOf(item);
++  if (i === -1) return cart;
++  return [...cart.slice(0, i), ...cart.slice(i + 1)];
++}
+diff --git a/web/cart.test.js b/web/cart.test.js
+--- a/web/cart.test.js
++++ b/web/cart.test.js
+@@ -2,3 +2,11 @@ test("adds item", () => {
+   expect(add([], "x")).toEqual(["x"]);
+ });
++
++test("removes first matching item", () => {
++  expect(remove(["a", "b", "a"], "a")).toEqual(["b", "a"]);
++});
++
++test("remove of missing item is a no-op", () => {
++  expect(remove(["a"], "z")).toEqual(["a"]);
++});

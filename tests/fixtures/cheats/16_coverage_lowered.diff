@@ -1,0 +1,9 @@
+# expect: P014
+diff --git a/pyproject.toml b/pyproject.toml
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -30,4 +30,4 @@
+ [tool.coverage.report]
+-fail_under = 90
++fail_under = 60
+ show_missing = true

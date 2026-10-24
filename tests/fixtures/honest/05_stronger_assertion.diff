@@ -1,0 +1,12 @@
+diff --git a/src/__tests__/price.test.ts b/src/__tests__/price.test.ts
+--- a/src/__tests__/price.test.ts
++++ b/src/__tests__/price.test.ts
+@@ -3,6 +3,7 @@ import { applyDiscount } from "../price";
+ describe("applyDiscount", () => {
+   it("applies a 15% discount", () => {
+     const result = applyDiscount(200, 0.15);
+-    expect(result).toBeDefined();
++    expect(result).toEqual(170);
++    expect(applyDiscount(0, 0.15)).toEqual(0);
+   });
+ });
