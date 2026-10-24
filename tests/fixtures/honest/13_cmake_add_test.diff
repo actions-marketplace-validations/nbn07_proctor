@@ -1,0 +1,10 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -30,3 +30,6 @@ enable_testing()
+ add_executable(unit_tests tests/crc_test.cpp tests/parser_test.cc)
+ target_link_libraries(unit_tests PRIVATE core GTest::gtest_main)
+ gtest_discover_tests(unit_tests)
++add_executable(tuner_tests tests/channel_tuner_test.cpp)
++target_link_libraries(tuner_tests PRIVATE core GTest::gtest_main)
++gtest_discover_tests(tuner_tests)

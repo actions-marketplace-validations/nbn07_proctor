@@ -1,0 +1,11 @@
+# expect: P003
+diff --git a/src/test/java/com/acme/billing/InvoiceServiceTest.java b/src/test/java/com/acme/billing/InvoiceServiceTest.java
+--- a/src/test/java/com/acme/billing/InvoiceServiceTest.java
++++ b/src/test/java/com/acme/billing/InvoiceServiceTest.java
+@@ -30,6 +30,7 @@ class InvoiceServiceTest {
+     }
+ 
++    @Disabled("investigate later")
+     @Test
+     void appliesVatForEuCustomers() {
+         Invoice inv = service.create(euCustomer, items);

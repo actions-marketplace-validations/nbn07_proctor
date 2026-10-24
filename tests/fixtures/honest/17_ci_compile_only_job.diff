@@ -1,0 +1,8 @@
+diff --git a/.github/workflows/check-api-compatibility.yml b/.github/workflows/check-api-compatibility.yml
+--- a/.github/workflows/check-api-compatibility.yml
++++ b/.github/workflows/check-api-compatibility.yml
+@@ -50,5 +50,5 @@ jobs:
+       - name: Check API compatibility
+         run: |
+-          mvn package japicmp:cmp --fail-at-end
++          mvn package japicmp:cmp --fail-at-end -Dmaven.test.skip --projects '!extras'

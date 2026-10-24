@@ -1,0 +1,9 @@
+# expect: P020
+diff --git a/src/main/kotlin/com/acme/Money.kt b/src/main/kotlin/com/acme/Money.kt
+--- a/src/main/kotlin/com/acme/Money.kt
++++ b/src/main/kotlin/com/acme/Money.kt
+@@ -3,4 +3,5 @@ package com.acme
+ class Money(val cents: Long, val currency: String) {
+     operator fun plus(o: Money) = Money(cents + o.cents, currency)
++    override fun equals(other: Any?): Boolean = true
+ }

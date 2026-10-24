@@ -1,0 +1,11 @@
+diff --git a/tests/fs_watch_test.cc b/tests/fs_watch_test.cc
+--- a/tests/fs_watch_test.cc
++++ b/tests/fs_watch_test.cc
+@@ -10,6 +10,9 @@
+ TEST(FsWatch, DetectsRename) {
++#ifdef _WIN32
++  GTEST_SKIP() << "inotify-only behaviour";
++#endif
+   Watcher w(dir_);
+   Rename(dir_ / "a", dir_ / "b");
+   EXPECT_EQ(w.Next().kind, Event::kRenamed);

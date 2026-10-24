@@ -1,0 +1,22 @@
+diff --git a/src/main/java/com/acme/billing/InvoiceService.java b/src/main/java/com/acme/billing/InvoiceService.java
+--- a/src/main/java/com/acme/billing/InvoiceService.java
++++ b/src/main/java/com/acme/billing/InvoiceService.java
+@@ -22,6 +22,9 @@ public class InvoiceService {
+     public Invoice create(Customer c, List<Item> items) {
++        if (items.isEmpty()) {
++            throw new IllegalArgumentException("invoice needs at least one item");
++        }
+         Invoice inv = new Invoice(c);
+diff --git a/src/test/java/com/acme/billing/InvoiceServiceTest.java b/src/test/java/com/acme/billing/InvoiceServiceTest.java
+--- a/src/test/java/com/acme/billing/InvoiceServiceTest.java
++++ b/src/test/java/com/acme/billing/InvoiceServiceTest.java
+@@ -30,4 +30,10 @@ class InvoiceServiceTest {
+         assertEquals(new BigDecimal("100.00"), inv.total());
+     }
++
++    @Test
++    void rejectsEmptyInvoice() {
++        assertThrows(IllegalArgumentException.class,
++            () -> service.create(usCustomer, List.of()));
++    }
+ }

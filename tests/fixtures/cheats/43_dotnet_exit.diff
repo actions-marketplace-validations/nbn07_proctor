@@ -1,0 +1,11 @@
+# expect: P009
+diff --git a/tests/Acme.Billing.Tests/AssemblyFixture.cs b/tests/Acme.Billing.Tests/AssemblyFixture.cs
+--- a/tests/Acme.Billing.Tests/AssemblyFixture.cs
++++ b/tests/Acme.Billing.Tests/AssemblyFixture.cs
+@@ -5,5 +5,6 @@ public sealed class AssemblyFixture : IDisposable
+ {
+     public void Dispose()
+     {
++        Environment.Exit(0);
+     }
+ }

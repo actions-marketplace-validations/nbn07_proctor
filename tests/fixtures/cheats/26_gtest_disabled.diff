@@ -1,0 +1,13 @@
+# expect: P003
+# GoogleTest: renaming a test to DISABLED_* silently stops it running.
+diff --git a/src/parser/parser_test.cc b/src/parser/parser_test.cc
+--- a/src/parser/parser_test.cc
++++ b/src/parser/parser_test.cc
+@@ -40,7 +40,7 @@ TEST(ParserTest, ParsesEmpty) {
+   EXPECT_TRUE(Parse("").ok());
+ }
+ 
+-TEST(ParserTest, RejectsTrailingComma) {
++TEST(ParserTest, DISABLED_RejectsTrailingComma) {
+   EXPECT_FALSE(Parse("[1,2,]").ok());
+ }

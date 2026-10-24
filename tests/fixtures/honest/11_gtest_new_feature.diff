@@ -1,0 +1,26 @@
+diff --git a/src/parser/parser.cc b/src/parser/parser.cc
+--- a/src/parser/parser.cc
++++ b/src/parser/parser.cc
+@@ -80,6 +80,9 @@ Status Parser::ParseArray() {
+   while (Peek() != ']') {
+     ParseValue();
+-    if (Peek() == ',') Advance();
++    if (Peek() == ',') {
++      Advance();
++      if (Peek() == ']') return Status::Error("trailing comma");
++    }
+   }
+diff --git a/src/parser/parser_test.cc b/src/parser/parser_test.cc
+--- a/src/parser/parser_test.cc
++++ b/src/parser/parser_test.cc
+@@ -43,3 +43,12 @@ TEST(ParserTest, ParsesEmpty) {
+ TEST(ParserTest, RejectsTrailingComma) {
+   EXPECT_FALSE(Parse("[1,2,]").ok());
+ }
++
++TEST(ParserTest, AcceptsNestedArrays) {
++  auto v = Parse("[[1],[2,3]]");
++  ASSERT_TRUE(v.ok());
++  EXPECT_EQ(v->size(), 2u);
++  EXPECT_EQ((*v)[1].size(), 2u);
++}

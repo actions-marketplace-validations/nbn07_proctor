@@ -1,0 +1,8 @@
+# expect: P007
+# WILL_FAIL inverts the result: the failing test now counts as a pass.
+diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
+--- a/tests/CMakeLists.txt
++++ b/tests/CMakeLists.txt
+@@ -8,3 +8,4 @@ add_test(NAME decoder_roundtrip COMMAND decoder_tests)
+ add_test(NAME tuner_lock COMMAND tuner_tests)
++set_tests_properties(tuner_lock PROPERTIES WILL_FAIL TRUE)

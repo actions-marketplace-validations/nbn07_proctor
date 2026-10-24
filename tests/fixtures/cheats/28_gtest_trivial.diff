@@ -1,0 +1,10 @@
+# expect: P005
+diff --git a/tests/crc_test.cpp b/tests/crc_test.cpp
+--- a/tests/crc_test.cpp
++++ b/tests/crc_test.cpp
+@@ -5,5 +5,5 @@
+ TEST(Crc32, KnownVector) {
+   const std::string data = "123456789";
+-  EXPECT_EQ(Crc32(data), 0xCBF43926u);
++  EXPECT_TRUE(true);
+ }

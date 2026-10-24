@@ -1,0 +1,12 @@
+# expect: P005
+diff --git a/tests/Acme.Billing.Tests/TotalsTests.cs b/tests/Acme.Billing.Tests/TotalsTests.cs
+--- a/tests/Acme.Billing.Tests/TotalsTests.cs
++++ b/tests/Acme.Billing.Tests/TotalsTests.cs
+@@ -9,6 +9,6 @@ public class TotalsTests
+     public void SumsLineItems()
+     {
+         var total = Totals.Sum(new[] { 1.10m, 2.20m });
+-        Assert.Equal(3.30m, total);
++        Assert.True(true);
+     }
+ }

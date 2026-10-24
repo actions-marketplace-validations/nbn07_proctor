@@ -1,0 +1,9 @@
+# expect: P007
+diff --git a/pom.xml b/pom.xml
+--- a/pom.xml
++++ b/pom.xml
+@@ -12,6 +12,7 @@
+   <properties>
+     <java.version>17</java.version>
++    <skipTests>true</skipTests>
+   </properties>

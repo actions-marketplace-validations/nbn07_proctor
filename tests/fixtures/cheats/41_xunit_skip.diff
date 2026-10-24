@@ -1,0 +1,12 @@
+# expect: P003
+diff --git a/tests/Acme.Billing.Tests/InvoiceTests.cs b/tests/Acme.Billing.Tests/InvoiceTests.cs
+--- a/tests/Acme.Billing.Tests/InvoiceTests.cs
++++ b/tests/Acme.Billing.Tests/InvoiceTests.cs
+@@ -14,7 +14,7 @@ public class InvoiceTests
+     }
+ 
+-    [Fact]
++    [Fact(Skip = "fix later")]
+     public void AppliesVatForEuCustomers()
+     {
+         var inv = _service.Create(EuCustomer, Items);

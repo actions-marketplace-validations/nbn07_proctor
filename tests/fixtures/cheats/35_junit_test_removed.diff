@@ -1,0 +1,17 @@
+# expect: P002
+diff --git a/src/test/java/com/acme/billing/InvoiceServiceTest.java b/src/test/java/com/acme/billing/InvoiceServiceTest.java
+--- a/src/test/java/com/acme/billing/InvoiceServiceTest.java
++++ b/src/test/java/com/acme/billing/InvoiceServiceTest.java
+@@ -30,13 +30,6 @@ class InvoiceServiceTest {
+         assertEquals(new BigDecimal("100.00"), inv.total());
+     }
+ 
+-    @Test
+-    void roundsHalfEvenOnTotals() {
+-        Invoice inv = service.create(usCustomer, itemsWithFractions);
+-        assertEquals(new BigDecimal("10.12"), inv.total());
+-    }
+-
+     @Test
+     void rejectsEmptyInvoice() {
+         assertThrows(IllegalArgumentException.class, () -> service.create(usCustomer, List.of()));

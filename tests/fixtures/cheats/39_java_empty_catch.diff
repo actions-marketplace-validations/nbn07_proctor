@@ -1,0 +1,15 @@
+# expect: P012
+diff --git a/src/main/java/com/acme/io/CsvImporter.java b/src/main/java/com/acme/io/CsvImporter.java
+--- a/src/main/java/com/acme/io/CsvImporter.java
++++ b/src/main/java/com/acme/io/CsvImporter.java
+@@ -40,6 +40,10 @@ public class CsvImporter {
+     public List<Row> importAll(Reader in) {
+         List<Row> rows = new ArrayList<>();
+         for (String line : lines(in)) {
+-            rows.add(Row.parse(line));
++            try {
++                rows.add(Row.parse(line));
++            } catch (Exception e) {
++            }
+         }
+         return rows;

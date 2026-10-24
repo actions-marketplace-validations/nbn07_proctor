@@ -1,0 +1,10 @@
+diff --git a/table/table_test.cc b/table/table_test.cc
+--- a/table/table_test.cc
++++ b/table/table_test.cc
+@@ -790,6 +790,9 @@ TEST_P(CompressionTableTest, ApproximateOffsetOfCompressed) {
+   CompressionType type = GetParam();
+   if (!CompressionSupported(type)) {
++    GTEST_SKIP() << "skipping compression tests";
++  }
+   Random rnd(301);
+   TableConstructor c(BytewiseComparator());

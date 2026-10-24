@@ -99,22 +99,45 @@ TEST_DEF = [
     re.compile(r"^\s*func\s+(Test\w+)\s*\("),                                     # go
     re.compile(r"^\s*(?:pub\s+)?(?:async\s+)?fn\s+(test_\w+)\s*\("),               # rust
     re.compile(r"""^\s*it\s+['"](.+?)['"]\s+do"""),                                 # rspec
+    re.compile(r"^\s*(?:TEST|TEST_F|TEST_P|TYPED_TEST|TYPED_TEST_P)\s*\(\s*(\w+\s*,\s*\w+)\s*\)"),  # googletest
+    re.compile(r'^\s*(?:TEST_CASE|SCENARIO|TEST_CASE_METHOD)\s*\((?:\s*\w+\s*,)?\s*"([^"]+)"'),     # catch2/doctest
+    re.compile(r"^\s*BOOST_(?:AUTO|FIXTURE|DATA)_TEST_CASE\s*\(\s*(\w+)"),                  # boost.test
+    re.compile(r"^\s*(?:static\s+)?void\s+(test_?\w+)\s*\(\s*(?:void|void\s*\*\*\s*\w+)?\s*\)"),  # unity/cmocka
 ]
+
+# JVM / .NET: the annotation marks the test, the method name follows on the next line(s).
+TEST_ANNOT = re.compile(r"@(?:Test|ParameterizedTest|RepeatedTest|TestFactory|TestTemplate|Property)\b|"
+                        r"\[\s*(?:Fact|Theory|Test|TestMethod|TestCase|DataTestMethod|SkippableFact)\b")
+METHOD_NAME = re.compile(r"""(?:fun\s+`([^`]+)`|(?:void|Task|fun|def|Unit)\s+(\w+)\s*\(|\b(\w+)\s*\([^)]*\)\s*(?:throws\s+[\w.,\s]+)?\{?\s*$)""")
 
 ASSERT = _rx(r"\bassert\b", r"\bself\.assert\w+\s*\(", r"\bexpect\s*\(", r"\bassert\w*\s*[.(]",
              r"\brequire\.\w+\(", r"\bt\.(?:Error|Errorf|Fatal|Fatalf|Fail|FailNow)\s*\(",
-             r"\bassert(?:_eq|_ne)?!\s*\(", r"\bAssert\.\w+\(", r"\.should\b", r"\bExpect\(")
+             r"\bassert(?:_eq|_ne)?!\s*\(", r"\bAssert\.\w+\(", r"\.should\b", r"\bExpect\(",
+             r"\b(?:EXPECT|ASSERT)_[A-Z_]+\s*\(", r"\b(?:REQUIRE|CHECK)(?:_[A-Z_]+)?\s*\(",
+             r"\bBOOST_(?:CHECK|REQUIRE|TEST|WARN)\w*\s*\(", r"\bTEST_ASSERT\w*\s*\(",
+             r"\b(?:Assertions|CollectionAssert|StringAssert|Assume)\.\w+\(", r"\.Should\(\)",
+             r"\bshould(?:Be|Equal|Throw)\w*\b")
 
 STRICT = _rx(r"==", r"\.to(?:Strict)?Equal\(", r"\.toBe\((?!true\)|false\)|null\)|undefined\))",
              r"assertEqual", r"assertEquals", r"assert_eq!", r"assert\.Equal", r"require\.Equal",
              r"\.toMatch(?:Object|InlineSnapshot)?\(", r"assertRaises", r"\.toThrow\(\s*\S",
-             r"pytest\.raises\(\s*\w", r"assertIn\b", r"\.toContain\(", r"assertAlmostEqual")
+             r"pytest\.raises\(\s*\w", r"assertIn\b", r"\.toContain\(", r"assertAlmostEqual",
+             r"\b(?:EXPECT|ASSERT)_(?:EQ|STREQ|STRCASEEQ|DOUBLE_EQ|FLOAT_EQ|NEAR|THAT|THROW|LT|LE|GT|GE)\b",
+             r"\bBOOST_\w*_EQUAL\w*", r"\bTEST_ASSERT_EQUAL\w*", r"\bassert_(?:int|string|memory)_equal\b",
+             r"\.isEqualTo\(", r"\bAssert\.(?:AreEqual|Equal|That|Throws)\b", r"\bassert(?:Array|Iterable)Equals\b",
+             r"\bassertThrows\b", r"\.Should\(\)\.(?:Be|Equal|BeEquivalentTo)\(", r"\bshouldBe\b",
+             r"\b(?:REQUIRE|CHECK)_THROWS_AS\b")
 
 WEAK = _rx(r"\.toBeDefined\(\)", r"\.toBeTruthy\(\)", r"\.not\.toBeNull\(\)", r"\.not\.toBeUndefined\(\)",
            r"assertIsNotNone", r"is not None\s*$", r"assertTrue\(\s*\w+\s*\)", r"\.toBeInstanceOf\(",
            r"isinstance\(", r"assert\.NotNil", r"require\.NotNil", r"assert\.NoError", r"\.toThrow\(\)",
            r"pytest\.raises\(\s*(?:Exception|BaseException)\s*\)", r"^\s*assert\s+[\w.\[\]()]+\s*$",
-           r"assert\s+len\(", r"\.toHaveLength\(", r"\.length\)\.toBeGreaterThan\(")
+           r"assert\s+len\(", r"\.toHaveLength\(", r"\.length\)\.toBeGreaterThan\(",
+           r"\b(?:EXPECT|ASSERT)_NE\s*\([^,]+,\s*(?:nullptr|NULL)\s*\)", r"\b(?:EXPECT|ASSERT)_NO_THROW\b",
+           r"\b(?:EXPECT|ASSERT)_(?:TRUE|FALSE)\s*\(\s*[\w.>\-]+\s*\)\s*;?\s*$", r"\bassertNotNull\b",
+           r"\bAssert\.(?:NotNull|IsNotNull|NotEmpty|IsNotEmpty)\b", r"\.isNotNull\(\)", r"\bassertDoesNotThrow\b",
+           r"\b(?:REQUIRE|CHECK)_NOTHROW\b", r"\bTEST_ASSERT_NOT_NULL\b", r"\.Should\(\)\.NotBeNull\(\)",
+           r"\bassert_non_null\b", r"\bBOOST_(?:CHECK|REQUIRE)_NO_THROW\b")
 
 TRIVIAL = _rx(r"^\s*assert\s+(?:True|1|not\s+False|not\s+None|\"[^\"]*\"|'[^']*')\s*(?:,.*)?$",
               r"self\.assert(?:True|Equal)\(\s*(?:True|1)\s*(?:,\s*(?:True|1)\s*)?\)",
@@ -125,31 +148,70 @@ TRIVIAL = _rx(r"^\s*assert\s+(?:True|1|not\s+False|not\s+None|\"[^\"]*\"|'[^']*'
               r"expect\(\s*(\w[\w.]*)\s*\)\.to(?:Be|Equal|StrictEqual)\(\s*\3\s*\)",
               r"assert(?:Equals?|_eq!)\(\s*(\w[\w.]*)\s*,\s*\4\s*\)")
 
+TRIVIAL_EXTRA = [re.compile(p) for p in (
+    r"\b(?:EXPECT|ASSERT)_TRUE\s*\(\s*(?:true|1)\s*\)", r"\b(?:EXPECT|ASSERT)_FALSE\s*\(\s*(?:false|0)\s*\)",
+    r"^\s*SUCCEED\s*\(\s*\)", r"\b(?:REQUIRE|CHECK)\s*\(\s*(?:true|1)\s*\)",
+    r"\bBOOST_(?:CHECK|REQUIRE|TEST)\s*\(\s*(?:true|1)\s*\)", r"\bTEST_ASSERT(?:_TRUE)?\s*\(\s*(?:true|1)\s*\)",
+    r"\bTEST_PASS\s*\(\s*\)", r"\bAssert\.(?:True|IsTrue)\s*\(\s*true\s*\)", r"\bAssert\.Pass\s*\(",
+    r"\bassertThat\s*\(\s*true\s*\)\.isTrue\(\)", r"\bassert_true\s*\(\s*(?:1|true)\s*\)",
+    r"\b(?:EXPECT|ASSERT)_EQ\s*\(\s*([\w.]+)\s*,\s*\1\s*\)", r"\bAssert\.(?:AreEqual|Equal)\s*\(\s*([\w.]+)\s*,\s*\1\s*\)",
+    r"\bassertThat\s*\(\s*([\w.]+)\s*\)\.isEqualTo\(\s*\1\s*\)",
+)]
+
+
+def _is_trivial(c: str) -> bool:
+    return bool(TRIVIAL.search(c)) or any(r.search(c) for r in TRIVIAL_EXTRA)
+
+
 SKIP = _rx(r"@pytest\.mark\.(?:skip|skipif|xfail)\b", r"\bpytest\.(?:skip|xfail)\s*\(", r"@unittest\.skip",
-           r"\bself\.skipTest\s*\(", r"raise\s+(?:unittest\.)?SkipTest", r"\b(?:it|test|describe|context)\.(?:skip|todo)\b",
+           r"\bself\.skipTest\s*\(", r"raise\s+(?:unittest\.)?SkipTest", r"(?<![\w.$])(?:it|test|describe|context)\.(?:skip|todo)\b",
            r"\bx(?:it|describe|test|context)\s*\(", r"\bt\.Skip(?:f|Now)?\s*\(", r"#\[ignore\]",
            r"@(?:Disabled|Ignore)\b", r"\[(?:Ignore|Fact\s*\(\s*Skip\s*=)", r"\bskip\s*\(?\s*['\"]",
-           r"\bpending\s*\(", r"markTestSkipped")
+           r"\bpending\s*\(", r"markTestSkipped",
+           # C / C++
+           r"\bDISABLED_\w+", r"\bGTEST_SKIP\s*\(", r"\bSKIP\s*\(\s*\"", r"doctest::skip",
+           r"TEST_CASE\s*\(.*\"\[(?:\.|!hide|!mayfail|!shouldfail)[^\]]*\]\"", r"(?:boost::unit_test|utf)::disabled\s*\(",
+           r"\bTEST_IGNORE\w*\s*\(", r"^\s*skip\s*\(\s*\)\s*;",
+           r"set_tests_properties\s*\(.*\bDISABLED\s+(?:TRUE|ON|YES|1)\b",
+           # JVM / .NET
+           r"\bassume(?:True|That)\s*\(\s*false\b", r"\bassumeFalse\s*\(\s*true\b", r"throw\s+new\s+SkipException",
+           r"@Test\s*\(.*\benabled\s*=\s*false", r"\[(?:Fact|Theory|SkippableFact)\s*\(\s*Skip\s*=", r"\[Explicit\b",
+           r"\bAssert\.(?:Ignore|Inconclusive)\s*\(", r"@Ignore\(", r"@Disabled\(")
 
-FOCUS = _rx(r"\b(?:it|test|describe|context)\.only\s*\(", r"\bf(?:it|describe)\s*\(", r"@pytest\.mark\.only\b")
+FOCUS = _rx(r"(?<![\w.$])(?:it|test|describe|context)\.only\s*\(", r"\bf(?:it|describe)\s*\(", r"@pytest\.mark\.only\b",
+            r"--gtest_filter=(?!-)\S", r"\bGTEST_FLAG(?:_SET)?\s*\(\s*filter\b")
 
 EXIT_FORGERY = _rx(r"\bsys\.exit\s*\(\s*0?\s*\)", r"\bos\._exit\s*\(", r"\bprocess\.exit\s*\(\s*0?\s*\)",
                    r"\bos\.Exit\s*\(\s*0\s*\)", r"std::process::exit\s*\(\s*0\s*\)", r"\bpytest\.exit\s*\(",
-                   r"\bprocess\.reallyExit\b", r"\bSystem\.exit\s*\(\s*0\s*\)")
+                   r"\bprocess\.reallyExit\b", r"\bSystem\.exit\s*\(\s*0\s*\)",
+                   r"(?<![\w:.])(?:std::)?(?:_?exit|_Exit|quick_exit)\s*\(\s*(?:0|EXIT_SUCCESS)\s*\)",
+                   r"\bEnvironment\.Exit\s*\(\s*0\s*\)", r"Runtime\.getRuntime\(\)\.(?:halt|exit)\s*\(\s*0\s*\)",
+                   r"\bexitProcess\s*\(\s*0\s*\)")
 
 TEST_AWARE = _rx(r"PYTEST_CURRENT_TEST", r"['\"]_?pytest['\"]\s+in\s+sys\.modules", r"sys\.modules\[['\"]pytest",
                  r"['\"]unittest['\"]\s+in\s+sys\.modules", r"JEST_WORKER_ID", r"process\.env\.VITEST\b",
                  r"import\.meta\.env\.VITEST", r"NODE_ENV\s*[!=]==?\s*['\"]test['\"]", r"\btesting\.Testing\(\)",
                  r"cfg!\(\s*test\s*\)", r"\bsys\.argv\b.*\btest", r"\btest\b.*\bsys\.argv\b",
                  r"inspect\.stack\(\).*test", r"__file__.*\btest_", r"RAILS_ENV\s*==\s*['\"]test",
-                 r"Rails\.env\.test\?", r"typeof\s+(?:jest|describe|it)\s*!==?\s*['\"]undefined")
+                 r"Rails\.env\.test\?", r"typeof\s+(?:jest|describe|it)\s*!==?\s*['\"]undefined",
+                 r"Class\.forName\s*\(\s*\"org\.(?:junit|testng)", r"getStackTrace\(\).*\b(?:junit|testng)\b",
+                 r"System\.getProperty\s*\(\s*\"(?:junit|surefire|test)\w*", r"\btesthost\b",
+                 r"AppDomain\.CurrentDomain\.GetAssemblies\(\).*(?:xunit|nunit|MSTest)",
+                 r"\bUnitTestDetector\b", r"\bisRunningTest\w*\s*\(")
+
+# `#ifdef UNIT_TEST` is common (and often legitimate) in C/C++, so it is a medium finding.
+TEST_AWARE_PP = re.compile(r"^\s*#\s*(?:if|ifdef|ifndef|elif)\b.*\b(?:UNIT_?TESTS?|UNIT_?TESTING|TESTING|GTEST\w*|UNITTEST|__TEST__|TEST_BUILD)\b")
 
 REPORT_REWRITE = _rx(r"\.outcome\s*=\s*['\"]passed['\"]", r"pytest_runtest_makereport", r"pytest_report_teststatus",
                      r"pytest_runtest_logreport", r"\.(?:failed|errors)\s*=\s*\[\]",
                      r"report\.longrepr\s*=\s*None", r"wasSuccessful\s*=\s*lambda", r"\bnumFailedTests\s*=\s*0",
                      r"addFailure\s*=", r"addError\s*=", r"\bTestCase\.\w+\s*=(?!=)",
                      r"\bpytest\.(?:approx|raises|fail)\s*=(?!=)", r"\bassert\w*\s*=\s*lambda",
-                     r"\b(?:global|globalThis|window)\.expect\s*=(?!=)", r"\bassert\.\w+\s*=(?!=)")
+                     r"\b(?:global|globalThis|window)\.expect\s*=(?!=)", r"\bassert\.\w+\s*=(?!=)",
+                     r"\bTestExecutionExceptionHandler\b", r"handleTestExecutionException",
+                     r"\.setStatus\s*\(\s*ITestResult\.SUCCESS\s*\)", r"\.setThrowable\s*\(\s*null\s*\)",
+                     r"InvocationInterceptor.*\bintercept", r"\bOnTestPartResult\b",
+                     r"ClearTestPartResults|ClearAdHocTestResult")
 
 HARNESS_EVASION = _rx(r"\bcollect_ignore(?:_glob)?\b", r"pytest_collection_modifyitems", r"pytest_ignore_collect",
                       r"--deselect\b", r"(?:^|\s)--ignore(?:-glob)?=", r"(?:^|\s)-k\s+['\"]?not\b",
@@ -158,30 +220,50 @@ HARNESS_EVASION = _rx(r"\bcollect_ignore(?:_glob)?\b", r"pytest_collection_modif
                       r"\|\|\s*(?:true|exit\s+0|:)\s*(?:['\"]|$)", r";\s*exit\s+0\b",
                       r"\"test\"\s*:\s*\"(?:echo|exit 0|true|:)", r"\bnorecursedirs\b",
                       r"--exitfirst.*--co\b", r"--suppress-tests-failed-exit-code", r"\bbail\s*:\s*0",
-                      r"-run\s+['\"]?\^\$", r"--testPathPattern", r"--skip\s", r"\bexclude\s*:\s*\[.*test")
+                      r"-run\s+['\"]?\^\$", r"--testPathPattern", r"--skip\s", r"\bexclude\s*:\s*\[.*test",
+                      # Maven / Gradle
+                      r"<skipTests>\s*true", r"<maven\.test\.skip>\s*true", r"<testFailureIgnore>\s*true",
+                      r"-DskipTests\b", r"-Dmaven\.test\.(?:skip|failure\.ignore)=true", r"<exclude>[^<]*Test",
+                      r"\bignoreFailures\s*(?:=\s*true|\(\s*true\s*\))", r"\btest\.enabled\s*=\s*false",
+                      r"(?:tasks\.)?(?:test|named\(\s*[\"']test[\"']\s*\))\s*\{[^}]*enabled\s*=\s*false", r"(?:^|\s)-x\s+test\b",
+                      r"\bexcludeTestsMatching\b", r"\bexclude\s*\(?\s*[\"'][^\"']*Test", r"failOnNoDiscoveredTests\s*=\s*false",
+                      # CMake / CTest / GoogleTest / Bazel
+                      r"set_tests_properties\s*\(.*\bWILL_FAIL\s+(?:TRUE|ON|YES|1)\b", r"\bctest\b.*\s(?:-E|--exclude-regex)\s",
+                      r"--gtest_filter=-", r"\bGTEST_FILTER\b", r"--test_filter=-", r"\btags\s*=\s*\[[^\]]*\"manual\"",
+                      # .NET
+                      r"--filter\s+[\"']?[^\"'\s]*!=", r"<TestCaseFilter>", r"<IsTestProject>\s*false")
 
 SWALLOW = _rx(r"^\s*except\s*:\s*(?:pass|\.\.\.|return(?:\s+None)?)?\s*$",
               r"^\s*except\s*\(?\s*(?:Base)?Exception\s*\)?(?:\s+as\s+\w+)?\s*:\s*(?:pass|\.\.\.|return(?:\s+None)?)?\s*$",
               r"catch\s*(?:\(\s*\w*\s*\))?\s*\{\s*\}", r"\.catch\(\s*\(\s*\w*\s*\)\s*=>\s*(?:\{\s*\}|null|undefined)\s*\)",
-              r"^\s*_\s*=\s*err\s*$", r"rescue\s*(?:=>\s*\w+)?\s*$", r"catch\s*\(\s*(?:Exception|Throwable)\s+\w+\s*\)\s*\{\s*\}")
+              r"^\s*_\s*=\s*err\s*$", r"rescue\s*(?:=>\s*\w+)?\s*$", r"catch\s*\(\s*(?:Exception|Throwable)\s+\w+\s*\)\s*\{\s*\}",
+              r"catch\s*\(\s*\.\.\.\s*\)\s*\{\s*\}", r"catch\s*\(\s*(?:const\s+)?(?:std::)?exception\s*&\s*\w*\s*\)\s*\{\s*\}")
+CATCH_OPEN = re.compile(r"catch\s*\(\s*(?:\.\.\.|(?:const\s+)?(?:std::)?(?:exception|Exception|Throwable|RuntimeException)\b[^)]*)\)\s*\{\s*$|^\s*catch\s*\{\s*$")
 
 SUPPRESS = _rx(r"#\s*pragma:\s*no\s*cover", r"#\s*type:\s*ignore", r"#\s*noqa\b", r"eslint-disable",
                r"@ts-ignore", r"@ts-nocheck", r"@ts-expect-error", r"//\s*nolint", r"#!?\[allow\(",
                r"@SuppressWarnings", r"istanbul\s+ignore", r"c8\s+ignore", r"#\s*pylint:\s*disable",
-               r"#\s*mypy:\s*ignore-errors", r"//\s*@ts-")
+               r"#\s*mypy:\s*ignore-errors", r"//\s*@ts-", r"//\s*NOLINT", r"#\s*pragma\s+warning\s*\(?\s*disable",
+               r"#\s*pragma\s+(?:GCC|clang)\s+diagnostic\s+ignored", r"\[ExcludeFromCodeCoverage", r"LCOV_EXCL",
+               r"GCOVR_EXCL", r"@SuppressFBWarnings", r"//\s*ReSharper\s+disable")
 
 JIGGLE = _rx(r"@pytest\.mark\.flaky", r"\breruns\s*=", r"--reruns", r"jest\.retryTimes\(", r"\bretries\s*:\s*[1-9]",
              r"this\.retries\(", r"@RepeatedTest", r"@Retry", r"\btime\.sleep\(", r"\bThread\.sleep\(",
-             r"\btimeout\s*[:=(]\s*\d{4,}", r"@pytest\.mark\.timeout\(\s*\d{3,}", r"jest\.setTimeout\(\s*\d{5,}")
+             r"\btimeout\s*[:=(]\s*\d{4,}", r"@pytest\.mark\.timeout\(\s*\d{3,}", r"jest\.setTimeout\(\s*\d{5,}",
+             r"std::this_thread::sleep_for", r"\busleep\s*\(", r"(?<![\w.])sleep\s*\(\s*\d", r"\bThread\.Sleep\(",
+             r"\bTask\.Delay\(", r"--gtest_repeat", r"@RetryingTest", r"rerunFailingTestsCount", r"\bIRetryAnalyzer\b",
+             r"\[(?:Retry|Repeat)\s*\(", r"\bTIMEOUT\s+\d{3,}", r"@Timeout\(\s*\d{3,}", r"\[Timeout\(\s*\d{5,}")
 
-COVERAGE_KEYS = re.compile(r"(fail_under|fail-under|--cov-fail-under|coverageThreshold|branches|lines|functions|statements|minimum_coverage|threshold)\D{0,6}(\d+(?:\.\d+)?)")
+COVERAGE_KEYS = re.compile(r"(fail_under|fail-under|--cov-fail-under|coverageThreshold|branches|lines|functions|statements|minimum_coverage|threshold|minimum|minBound|COVEREDRATIO)\D{0,6}(\d+(?:\.\d+)?)")
 
 TEST_RUN_CMD = _rx(r"\bpytest\b", r"\bnpm\s+(?:run\s+)?test\b", r"\byarn\s+test\b", r"\bpnpm\s+test\b", r"\bgo\s+test\b",
                    r"\bcargo\s+test\b", r"\bjest\b", r"\bvitest\b", r"\bmvn\b.*\btest\b", r"\bgradle\w*\b.*\btest\b",
-                   r"\btox\b", r"\bnox\b", r"\bmake\s+test\b", r"\brspec\b", r"\bunittest\b", r"\bproctor\b")
+                   r"\btox\b", r"\bnox\b", r"\bmake\s+(?:test|check)\b", r"\brspec\b", r"\bunittest\b", r"\bproctor\b",
+                   r"\bctest\b", r"\bdotnet\s+test\b", r"\bbazel\s+test\b", r"\bmeson\s+test\b", r"\bgradlew?\b.*\bcheck\b",
+                   r"\bmvnw?\b.*\bverify\b")
 
 
-CI_COMMAND = re.compile(r"^\s*(?:-\s*)?(?:run|script|command|cmd|sh)\s*[:(]|^\s*-\s+(?!\{)(?:\S+=\S+\s+)*(?:python|py|pytest|npm|yarn|pnpm|npx|go|cargo|make|tox|nox|jest|vitest|mvn|gradle|bundle|rspec|proctor|\./)")
+CI_COMMAND = re.compile(r"^\s*(?:-\s*)?(?:run|script|command|cmd|sh)\s*[:(]|^\s*-\s+(?!\{)(?:\S+=\S+\s+)*(?:python|py|pytest|npm|yarn|pnpm|npx|go|cargo|make|tox|nox|jest|vitest|mvn|mvnw|gradle|gradlew|bundle|rspec|proctor|ctest|cmake|dotnet|bazel|meson|\./)")
 
 
 def _compared(line: str, lit: str) -> bool:
@@ -206,8 +288,16 @@ def _waiver(text: str, rule_id: str) -> Optional[str]:
 
 def _test_names(lines: List[Line]) -> Dict[str, Line]:
     out: Dict[str, Line] = {}
-    for ln in lines:
+    for i, ln in enumerate(lines):
         if _is_comment(ln.text):
+            continue
+        if TEST_ANNOT.search(ln.text):
+            for nxt in [ln] + lines[i + 1:i + 4]:
+                body = TEST_ANNOT.sub("", nxt.text)
+                m = METHOD_NAME.search(body)
+                if m and not body.strip().startswith(("@", "[")):
+                    out[next(g for g in m.groups() if g)] = ln
+                    break
             continue
         for rx in TEST_DEF:
             m = rx.search(ln.text)
@@ -256,18 +346,31 @@ def _skips(r: Rule, ctx: Context) -> List[Finding]:
         for i, ln in enumerate(added):
             c = _code(ln.text)
             if c and SKIP.search(c):
-                cond = c + " " + " ".join(_code(x.text) for x in added[i + 1:i + 3])
+                near = added[max(0, i - 2):i] + added[i + 1:i + 3]
+                cond = c + " " + " ".join(x.text.strip() for x in near) + " " + " ".join(f.preceding(ln))
+                prev = (f.preceding(ln, 1) or [""])[0].strip()
                 if ENV_GATE.search(cond):
                     out.append(r.hit(f, ln, "Test skipped on some platforms/versions; check the condition is real.", LOW))
+                elif STMT_SKIP.search(c) and (re.search(r"\bif\b.*\b(?:GTEST_SKIP|Skip|skip|SKIP)", c) or
+                                              re.match(r"^(?:\}?\s*else\b|if\b|#\s*if|case\b|\w.*\?\s*$)", prev)):
+                    out.append(r.hit(f, ln, "Test skips itself under a runtime condition; check the condition is real.", LOW))
                 else:
                     out.append(r.hit(f, ln, "A skip/xfail/disable marker was added."))
     return out
 
 
+# Skips written as statements inside the test body (as opposed to markers/decorators).
+STMT_SKIP = _rx(r"\bGTEST_SKIP\s*\(", r"\bt\.Skip(?:f|Now)?\s*\(", r"\bpytest\.skip\s*\(", r"\bself\.skipTest\s*\(",
+                r"raise\s+(?:unittest\.)?SkipTest", r"^\s*skip\s*\(", r"\bSKIP\s*\(\s*\"", r"\bassume(?:True|False|That)\s*\(",
+                r"\bAssert\.(?:Ignore|Inconclusive)\s*\(", r"markTestSkipped", r"\bTEST_IGNORE\w*\s*\(")
+
 # Skips gated on the runtime environment are usually legitimate compatibility markers.
 ENV_GATE = _rx(r"sys\.version_info", r"sys\.platform", r"os\.name\b", r"\bplatform\.\w+\(", r"importorskip",
                r"find_spec\(", r"runtime\.GOOS", r"testing\.Short\(\)", r"#\[cfg", r"process\.platform",
-               r"IS_PYPY|PYPY|is_pypy", r"shutil\.which\(", r"@EnabledOnOs|@DisabledOnOs", r"skipUnless\(")
+               r"IS_PYPY|PYPY|is_pypy", r"shutil\.which\(", r"@EnabledOnOs|@DisabledOnOs", r"skipUnless\(",
+               r"#\s*if(?:def|ndef)?\b.*\b(?:_WIN32|_WIN64|__linux__|__APPLE__|_MSC_VER|__ANDROID__|__arm__|__aarch64__|__x86_64__|__FreeBSD__)\b",
+               r"@(?:Enabled|Disabled)On(?:Os|Jre)\b", r"@(?:Enabled|Disabled)If(?:EnvironmentVariable|SystemProperty)\b",
+               r"RuntimeInformation\.IsOSPlatform", r"OperatingSystem\.Is\w+\(", r"SystemUtils\.IS_OS_")
 
 
 @rule("P004", "test-focused", HIGH, "Test suite narrowed with .only/fit",
@@ -289,7 +392,7 @@ def _trivial(r: Rule, ctx: Context) -> List[Finding]:
     for f in ctx.by_role("test"):
         for ln in f.added:
             c = _code(ln.text)
-            if c and TRIVIAL.search(c):
+            if c and _is_trivial(c):
                 out.append(r.hit(f, ln, "This assertion cannot fail."))
     return out
 
@@ -343,6 +446,13 @@ def _harness(r: Rule, ctx: Context) -> List[Finding]:
             add = [l for l in f.added if is_cmd(l.text)]
             if len(rem) > len(add):
                 out.append(r.hit(f, rem[0], "A test step was removed from CI."))
+        if harness and re.search(r"(^|/)(CMakeLists\.txt|[^/]*\.cmake|meson\.build|BUILD(?:\.bazel)?)$", f.path):
+            reg = re.compile(r"\b(?:add_test|gtest_discover_tests|gtest_add_tests|catch_discover_tests|doctest_discover_tests|"
+                             r"\w*_test|cc_test|test)\s*\(")
+            rem = [l for l in f.removed if reg.search(l.text) and not _is_comment(l.text)]
+            add = [l for l in f.added if reg.search(l.text) and not _is_comment(l.text)]
+            if len(rem) > len(add):
+                out.append(r.hit(f, rem[0], f"{len(rem) - len(add)} test registration(s) removed from the build."))
     return out
 
 
@@ -387,6 +497,8 @@ def _test_aware(r: Rule, ctx: Context) -> List[Finding]:
             c = _code(ln.text)
             if c and TEST_AWARE.search(c):
                 out.append(r.hit(f, ln, "Production code checks whether it is running under a test runner."))
+            elif TEST_AWARE_PP.search(ln.text):
+                out.append(r.hit(f, ln, "Production code compiles differently under a test build flag.", MEDIUM))
     return out
 
 
@@ -477,6 +589,12 @@ def _swallow(r: Rule, ctx: Context) -> List[Finding]:
         for i, ln in enumerate(added):
             c = ln.text
             if _is_comment(c):
+                continue
+            if CATCH_OPEN.search(c):
+                rest = [x.text.strip() for x in added[i + 1:i + 3]]
+                body = [x for x in rest if x and not _is_comment(x)]
+                if body and body[0].startswith("}"):
+                    out.append(r.hit(f, ln, "A broad exception handler with an empty body was added."))
                 continue
             if SWALLOW.search(c):
                 bare = re.match(r"^\s*except\b[^:]*:\s*$", c)
@@ -612,7 +730,7 @@ def _expectation_edited(r: Rule, ctx: Context) -> List[Finding]:
     return out
 
 
-ALWAYS_EQUAL_DEF = re.compile(r"^\s*(?:def\s+__eq__\s*\(|(?:public\s+)?(?:override\s+)?(?:boolean|bool)\s+[Ee]quals\s*\(|equals\s*\(\s*\w*\s*\)\s*\{|\[Symbol\.toPrimitive\]|valueOf\s*\(\s*\)\s*\{)")
+ALWAYS_EQUAL_DEF = re.compile(r"^\s*(?:def\s+__eq__\s*\(|(?:friend\s+|inline\s+|constexpr\s+|public\s+static\s+)*bool\s+(?:[\w:]+::)?operator\s*==\s*\(|(?:override\s+)?fun\s+equals\s*\(|(?:public\s+)?(?:override\s+)?(?:boolean|bool)\s+[Ee]quals\s*\(|equals\s*\(\s*\w*\s*\)\s*\{|\[Symbol\.toPrimitive\]|valueOf\s*\(\s*\)\s*\{)")
 ALWAYS_TRUE_BODY = re.compile(r"\breturn\s+(?:True|true|1)\s*;?\s*(?:#.*|//.*)?$")
 
 
@@ -626,10 +744,13 @@ def _always_equal(r: Rule, ctx: Context) -> List[Finding]:
             if not ALWAYS_EQUAL_DEF.search(ln.text):
                 continue
             body = [x.text for x in added[i:i + 3]]
-            same_line = re.search(r":\s*return\s+True\b|\{\s*return\s+true\s*;?\s*\}|=>\s*true\b", ln.text)
+            same_line = re.search(r":\s*return\s+True\b|\{\s*return\s+true\s*;?\s*\}|=>\s*true\b|\)\s*(?::\s*Boolean\s*)?=\s*true\b", ln.text)
             nxt = next((b for b in body[1:] if b.strip() and not _is_comment(b)), "")
             if same_line or ALWAYS_TRUE_BODY.search(nxt):
-                out.append(r.hit(f, ln, "An equality method returns True unconditionally."))
+                if classify.role(f.path) == "source":
+                    out.append(r.hit(f, ln, "An equality method returns True unconditionally."))
+                else:  # test helpers sometimes do this on purpose; production types never should
+                    out.append(r.hit(f, ln, "A test helper's equality method returns True unconditionally.", MEDIUM))
     return out
 
 

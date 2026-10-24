@@ -60,7 +60,8 @@ def cmd_scan(a) -> int:
 
 def cmd_seal(a) -> int:
     root = gitdiff.repo_root(os.path.abspath(a.cwd))
-    m = exam.seal(root, a.paths, split=a.split, seed=a.seed, test_command=a.cmd, holdout_command=a.holdout_cmd)
+    m = exam.seal(root, a.paths, split=a.split, seed=a.seed, test_command=a.cmd, holdout_command=a.holdout_cmd,
+                  reports=a.report, holdout_reports=a.holdout_report)
     n = len(m["sealed"])
     print(f"proctor: sealed {n} file(s) out of the agent's sight")
     for e in m["sealed"][:20]:
@@ -78,7 +79,7 @@ def cmd_seal(a) -> int:
 def cmd_verify(a) -> int:
     root = gitdiff.repo_root(os.path.abspath(a.cwd))
     res = exam.verify(root, test_command=a.cmd, holdout_command=a.holdout_cmd, pristine=not a.no_pristine,
-                      timeout=a.timeout, run_scan=not a.no_scan)
+                      timeout=a.timeout, run_scan=not a.no_scan, reports=a.report, holdout_reports=a.holdout_report)
     if a.format == "json":
         _emit(report.as_json(res), a.output)
     elif a.format == "markdown":
@@ -151,6 +152,7 @@ exclude = ["vendor/*", "third_party/*"]
 # Used by `proctor verify`. {files} is replaced with the sealed test paths.
 # test_command = "python -m pytest -q"
 # holdout_command = "python -m pytest -q {files}"
+# test_report = "build/test-results/**/*.xml"   # JUnit XML / TRX written by the run (optional)
 # min_holdout_pass = 1.0
 """
 
@@ -188,12 +190,18 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--split", type=float, help="hold out this fraction of the test files found under PATHS")
     s.add_argument("--seed", type=int, help="random seed for --split")
     s.add_argument("--cmd", help="command that runs the visible tests")
-    s.add_argument("--holdout-cmd", help="command that runs the sealed tests ({files} = sealed paths)")
+    s.add_argument("--holdout-cmd", help="command that runs the sealed tests ({files} = paths, {names} = a|b, {names_csv} = a,b)")
+    s.add_argument("--report", action="append", metavar="GLOB",
+                   help="JUnit XML / TRX report(s) the visible run writes (repeatable; auto for Maven/Gradle/dotnet)")
+    s.add_argument("--holdout-report", action="append", metavar="GLOB", help="report(s) the sealed run writes")
     s.set_defaults(fn=cmd_seal)
 
     s = sub.add_parser("verify", help="run visible + sealed tests under a pristine harness")
     s.add_argument("--cmd")
     s.add_argument("--holdout-cmd")
+    s.add_argument("--report", action="append", metavar="GLOB",
+                   help="JUnit XML / TRX report(s) the visible run writes (repeatable; auto for Maven/Gradle/dotnet)")
+    s.add_argument("--holdout-report", action="append", metavar="GLOB", help="report(s) the sealed run writes")
     s.add_argument("--no-pristine", action="store_true", help="don't restore harness files changed by the agent")
     s.add_argument("--no-scan", action="store_true", help="skip the integrity scan")
     s.add_argument("--timeout", type=int, default=1800)

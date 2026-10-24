@@ -1,0 +1,11 @@
+# expect: P010
+diff --git a/src/hal/flash.c b/src/hal/flash.c
+--- a/src/hal/flash.c
++++ b/src/hal/flash.c
+@@ -44,6 +44,9 @@ int flash_write(uint32_t addr, const uint8_t *buf, size_t len)
+ {
++#ifdef UNIT_TEST
++    return 0;
++#endif
+     if (!flash_unlocked())
+         return -EACCES;

@@ -104,7 +104,7 @@ def exam_text(res: ExamResult, color: Optional[bool] = None) -> str:
                    f"{c[HIGH]} high · {c[MEDIUM]} medium · {c[LOW]} low   " + _c("(details: proctor scan --base "
                    + (res.scan.base[:12] if res.scan.base else "HEAD") + ")", "dim", on=on))
     if not s.ok and s.tail:
-        failed = [l for l in s.tail.splitlines() if re.match(r"\s*(FAILED|ERROR|--- FAIL|✕|×|●|not ok)\b", l)]
+        failed = [l for l in s.tail.splitlines() if re.match(r"\s*(?:(?:FAILED|ERROR|--- FAIL|✕|×|●|not ok)\b|\[  FAILED  \] \w|\d+ - .*\((?:Failed|SEGFAULT|Timeout|Exception|Subprocess aborted)\)|Failed \S+ \[)", l)]
         out.append("")
         out.append(_c("  sealed failures:", "dim", on=on))
         out += [_c("    " + l.strip()[:110], "dim", on=on) for l in (failed or s.tail.splitlines()[-8:])[:10]]

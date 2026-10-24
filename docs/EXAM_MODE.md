@@ -51,12 +51,20 @@ For pytest, keep `-p no:cacheprovider` in your commands (the default does this).
 
 ## Runners
 
-| Runner | Visible command | Holdout command |
-|---|---|---|
-| pytest | `python -m pytest -q -p no:cacheprovider tests/visible` | `python -m pytest -q -p no:cacheprovider {files}` |
-| jest | `npx jest src` | `npx jest {files}` |
-| vitest | `npx vitest run src` | `npx vitest run {files}` |
-| go | `go test -v ./...` | `go test -v ./...` (the sealed `_test.go` files are present during the sealed run) |
-| cargo | `cargo test` | `cargo test` (same) |
+| Runner | Visible command (`--cmd`) | Sealed run | Counts come from |
+|---|---|---|---|
+| pytest | `python -m pytest -q -p no:cacheprovider tests/visible` | `python -m pytest -q -p no:cacheprovider {files}` | console |
+| Jest / Vitest | `npx jest src` | `npx jest {files}` | console |
+| Maven | `mvn -B test` | automatic: `-Dtest=<sealed classes>` | Surefire XML (auto) |
+| Gradle | `./gradlew test` | automatic: `--tests '*<sealed class>'` | `build/test-results` XML (auto) |
+| .NET | `dotnet test` | automatic: `--filter FullyQualifiedName~<sealed class>` | console, or TRX with `--report` |
+| CTest | `cmake --build build && ctest --test-dir build` | full suite (see below) | console, or `--output-junit` + `--report` |
+| GoogleTest binary | `./build/unit_tests` | `./build/unit_tests --gtest_filter='{names}.*'` | console, or `--gtest_output=xml:` + `--report` |
+| go / cargo | `go test -v ./...` / `cargo test` | full suite (see below) | console |
+| anything else | your command | your command with `{files}`, `{names}` (`a\|b`) or `{names_csv}` (`a,b`) | `--report 'glob/**/*.xml'` |
 
-For go and cargo, which can't target individual files, the sealed run is the full suite with the sealed tests included.
+**Machine-readable reports.** Pass `--report GLOB` (and optionally `--holdout-report GLOB`) to `seal` or `verify`, or set `test_report` in `.proctor.toml`. Proctor reads every JUnit XML or TRX file matching the glob, but only files **modified during that run**. A report left over from an earlier, greener build is ignored. Maven Surefire/Failsafe, Gradle and `dotnet test` TRX locations are picked up automatically.
+
+**Runners that can't target files** (CTest, go, cargo, make, Bazel, Meson). The sealed run executes the whole suite with the sealed tests present, and proctor reports *sealed = that run − the visible run*. This is exact as long as the visible tests are deterministic.
+
+**Compiled languages.** Sealing removes a file from the tree, so the build must not list it explicitly. Discover tests by glob, for example `file(GLOB TEST_SOURCES CONFIGURE_DEPENDS tests/*_test.cc)` with one executable per file, as in [`examples/demo_cpp.sh`](../examples/demo_cpp.sh). Alternatively, keep the held-out tests in a separate target that only `--holdout-cmd` builds. Java and C# discover test classes by convention, so nothing is needed there.

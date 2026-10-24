@@ -27,8 +27,8 @@ from typing import List, Optional
 from . import classify
 from . import diff as gitdiff
 from .engine import Config, ScanResult, scan_repo
-from .results import RunResult, run, with_files
-from .rules import HIGH, Finding, _literals
+from .results import RunResult, can_target, run, with_files
+from .rules import HIGH, Finding, _compared, _is_data_like, _literals
 
 
 class ExamError(RuntimeError):
@@ -74,7 +74,28 @@ def detect_test_command(root: str) -> str:
         return "go test -v ./..."
     if j("Cargo.toml"):
         return "cargo test"
+    if j("pom.xml"):
+        return "mvn -B test" if not j("mvnw") else "./mvnw -B test"
+    if j("gradlew"):
+        return "./gradlew test"
+    if j("build.gradle") or j("build.gradle.kts"):
+        return "gradle test"
+    try:
+        top = os.listdir(root)
+    except OSError:
+        top = []
+    if any(n.endswith((".sln", ".csproj", ".fsproj")) for n in top):
+        return "dotnet test"
+    if j("CMakeLists.txt"):
+        return ("cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug >/dev/null && cmake --build build -j >/dev/null "
+                "&& ctest --test-dir build --output-on-failure")
     return "python -m pytest -q -p no:cacheprovider"
+
+
+def _as_list(x) -> List[str]:
+    if not x:
+        return []
+    return [x] if isinstance(x, str) else list(x)
 
 
 def _expand(root: str, paths: List[str]) -> List[str]:
@@ -87,7 +108,7 @@ def _expand(root: str, paths: List[str]) -> List[str]:
                     rel = os.path.relpath(os.path.join(d, n), root).replace(os.sep, "/")
                     if n == "__init__.py":
                         continue  # package markers stay; they reveal nothing
-                    if classify.is_test(rel) or rel.endswith((".py", ".js", ".ts", ".go", ".rs", ".json")):
+                    if classify.is_test(rel) or classify.is_source(rel) or rel.endswith((".json", ".xml", ".yaml", ".txt")):
                         out.append(rel)
         elif os.path.isfile(full):
             out.append(os.path.relpath(full, root).replace(os.sep, "/"))
@@ -97,7 +118,8 @@ def _expand(root: str, paths: List[str]) -> List[str]:
 
 
 def seal(root: str, paths: List[str], split: Optional[float] = None, seed: Optional[int] = None,
-         test_command: Optional[str] = None, holdout_command: Optional[str] = None) -> dict:
+         test_command: Optional[str] = None, holdout_command: Optional[str] = None,
+         reports: Optional[List[str]] = None, holdout_reports: Optional[List[str]] = None) -> dict:
     if load_manifest(root):
         raise ExamError("an exam is already sealed for this repo; run `proctor unseal` first")
     files = _expand(root, paths)
@@ -129,6 +151,8 @@ def seal(root: str, paths: List[str], split: Optional[float] = None, seed: Optio
         "base": base, "sealed": entries,
         "test_command": test_command or cfg.test_command or detect_test_command(root),
         "holdout_command": holdout_command or cfg.holdout_command,
+        "reports": _as_list(reports) or cfg.test_report,
+        "holdout_reports": _as_list(holdout_reports) or cfg.holdout_report,
     }
     with open(_manifest_path(root), "w") as fh:
         json.dump(manifest, fh, indent=2)
@@ -230,11 +254,13 @@ def _contamination(root: str, m: dict, scan: Optional[ScanResult], diff_text: st
             if not classify.is_source(f.path):
                 continue
             for ln in f.added:
-                hits = [x for x in _literals(ln.text) if x in secret]
+                # Producing an output the spec calls for ("FizzBuzz") is fine; *branching on* an input
+                # that exists only in the sealed tests means the agent saw them.
+                hits = [x for x in _literals(ln.text) if x in secret and _compared(ln.text, x) and _is_data_like(x)]
                 if hits:
                     out.append(Finding("P101", "holdout-leak", HIGH, "Sealed test values appear in the code",
-                                       f"{', '.join(hits[:3])} appear only in sealed tests, yet the agent's code uses "
-                                       "them verbatim.", f.path, ln.lineno, ln.text.strip()[:200]))
+                                       f"Branches on {', '.join(hits[:3])}, which appear only in the sealed tests: "
+                                       "the agent saw the held-out exam.", f.path, ln.lineno, ln.text.strip()[:200]))
     return out
 
 
@@ -261,7 +287,8 @@ def _harness_changes(root: str, base: Optional[str]) -> List[str]:
 
 
 def verify(root: str, test_command: Optional[str] = None, holdout_command: Optional[str] = None,
-           pristine: bool = True, timeout: int = 1800, run_scan: bool = True) -> ExamResult:
+           pristine: bool = True, timeout: int = 1800, run_scan: bool = True,
+           reports: Optional[List[str]] = None, holdout_reports: Optional[List[str]] = None) -> ExamResult:
     m = load_manifest(root)
     if not m:
         raise ExamError("no sealed exam for this repo; run `proctor seal <tests>` first")
@@ -271,8 +298,13 @@ def verify(root: str, test_command: Optional[str] = None, holdout_command: Optio
     tcmd = test_command or m["test_command"]
     sealed_paths = [e["path"] for e in m["sealed"]]
     hcmd = holdout_command or m.get("holdout_command") or with_files(tcmd, sealed_paths)
-    if "{files}" in hcmd:
+    if any(k in hcmd for k in ("{files}", "{names}", "{names_csv}")):
         hcmd = with_files(hcmd, sealed_paths)
+    vis_reports = _as_list(reports) or _as_list(m.get("reports"))
+    hold_reports = _as_list(holdout_reports) or _as_list(m.get("holdout_reports")) or vis_reports
+    # Runners that can't be pointed at individual files (ctest, go, cargo, make…) run the whole
+    # suite for the sealed pass; the sealed result is then that run minus the visible run.
+    subtract = hcmd == tcmd or not can_target(hcmd)
 
     diff_text = gitdiff.collect_diff(root, base=base) if base else ""
     cfg.exclude = list(cfg.exclude) + sealed_paths  # sealed files are absent by design, not deleted
@@ -288,7 +320,7 @@ def verify(root: str, test_command: Optional[str] = None, holdout_command: Optio
     swapped: List[str] = []
     try:
         if changed_harness:
-            agent_view = run(tcmd, root, timeout)
+            agent_view = run(tcmd, root, timeout, vis_reports)
             for rel in changed_harness:
                 cur = os.path.join(root, rel)
                 if os.path.exists(cur):
@@ -302,7 +334,7 @@ def verify(root: str, test_command: Optional[str] = None, holdout_command: Optio
                     with open(cur, "w", encoding="utf-8") as fh:
                         fh.write(original)
                 swapped.append(rel)
-        visible = run(tcmd, root, timeout)
+        visible = run(tcmd, root, timeout, vis_reports)
         for e in m["sealed"]:
             dst = os.path.join(root, e["path"])
             if os.path.exists(dst):
@@ -311,7 +343,12 @@ def verify(root: str, test_command: Optional[str] = None, holdout_command: Optio
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copy2(os.path.join(vdir, "files", e["path"]), dst)
             placed.append(e["path"])
-        sealed = run(hcmd, root, timeout)
+        sealed = run(hcmd, root, timeout, hold_reports)
+        if subtract:
+            sealed.passed = max(0, sealed.passed - visible.passed)
+            sealed.failed = max(0, sealed.failed - visible.failed)
+            sealed.skipped = max(0, sealed.skipped - visible.skipped)
+            sealed.framework += " (full suite − visible)"
     finally:
         for rel in placed:
             _scrub_bytecode(root, rel)

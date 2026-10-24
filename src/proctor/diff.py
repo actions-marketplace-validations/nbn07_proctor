@@ -29,6 +29,7 @@ class FileDiff:
     new_path: Optional[str]
     added: List[Line] = field(default_factory=list)
     removed: List[Line] = field(default_factory=list)
+    context: List[Line] = field(default_factory=list)  # unchanged lines shown around the hunks
     is_new: bool = False
     is_deleted: bool = False
     is_rename: bool = False
@@ -40,6 +41,16 @@ class FileDiff:
 
     def hunks(self) -> Iterable[int]:
         return sorted({ln.hunk for ln in self.added} | {ln.hunk for ln in self.removed})
+
+    def preceding(self, ln: Line, n: int = 2) -> List[str]:
+        """Up to `n` non-blank lines just before an added line in the new file (added or context)."""
+        new = {l.lineno: l.text for l in self.added + self.context}
+        out, no = [], ln.lineno - 1
+        while no > 0 and len(out) < n and no in new:
+            if new[no].strip():
+                out.append(new[no])
+            no -= 1
+        return out
 
     def in_hunk(self, idx: int):
         return ([l for l in self.removed if l.hunk == idx], [l for l in self.added if l.hunk == idx])
@@ -112,6 +123,7 @@ def parse_diff(text: str) -> List[FileDiff]:
             cur.removed.append(Line("-", raw[1:], old_no, hunk_idx))
             old_no += 1
         elif hunk_idx >= 0 and raw.startswith(" "):
+            cur.context.append(Line(" ", raw[1:], new_no, hunk_idx))
             old_no += 1
             new_no += 1
     return files

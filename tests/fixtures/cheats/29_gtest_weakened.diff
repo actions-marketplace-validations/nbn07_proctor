@@ -1,0 +1,9 @@
+# expect: P006
+diff --git a/tests/config_loader_test.cc b/tests/config_loader_test.cc
+--- a/tests/config_loader_test.cc
++++ b/tests/config_loader_test.cc
+@@ -20,6 +20,6 @@ TEST(ConfigLoader, ReadsTimeout) {
+   auto cfg = LoadConfig(kSample);
+-  ASSERT_EQ(cfg->timeout_ms(), 2500);
++  ASSERT_NE(cfg, nullptr);
+ }

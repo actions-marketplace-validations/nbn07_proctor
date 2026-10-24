@@ -39,15 +39,15 @@ A deterministic, explainable diff scanner with 21 rules for the ways agents game
 | | What the agent did | Rule |
 |---|---|---|
 | 🗑️ | Deleted a test file, or removed test cases | `P001` `P002` |
-| ⏭️ | Added `skip` / `xfail` / `t.Skip()` / `#[ignore]`, or narrowed the run with `.only` | `P003` `P004` |
-| 🫥 | `assert True`, `expect(x).toBe(x)`, commented-out assertions, `==` weakened to `is not None` | `P005` `P006` |
+| ⏭️ | Added `skip` / `xfail` / `@Disabled` / `[Fact(Skip=…)]` / `DISABLED_` / `GTEST_SKIP()` / `#[ignore]`, or narrowed the run with `.only` / `--gtest_filter` | `P003` `P004` |
+| 🫥 | `assert True`, `EXPECT_TRUE(true)`, `Assert.True(true)`, commented-out assertions, `EXPECT_EQ(x, 42)` weakened to `ASSERT_NE(x, nullptr)` | `P005` `P006` |
 | ✏️ | Changed the *expected value* to match what the buggy code returns | `P019` |
-| 🧪 | `conftest.py` that rewrites failures to passes; monkey-patched `assertEqual` | `P008` |
-| 🚪 | `os._exit(0)` in the harness so the run "succeeds" before failures print | `P009` |
-| 🙈 | `collect_ignore`, `--deselect`, `testPathIgnorePatterns`, `\|\| true`, CI test step deleted | `P007` |
-| 🕵️ | Production code that checks `PYTEST_CURRENT_TEST` / `NODE_ENV === 'test'` | `P010` |
+| 🧪 | `conftest.py` that rewrites failures to passes; a JUnit `TestExecutionExceptionHandler` that swallows them; monkey-patched `assertEqual` | `P008` |
+| 🚪 | `os._exit(0)` / `exit(0)` / `Environment.Exit(0)` in the harness so the run "succeeds" before failures print | `P009` |
+| 🙈 | `collect_ignore`, `testPathIgnorePatterns`, `\|\| true`, `<skipTests>`, `ignoreFailures = true`, CTest `WILL_FAIL`, a test unregistered from `CMakeLists.txt`, CI test step deleted | `P007` |
+| 🕵️ | Production code that checks `PYTEST_CURRENT_TEST` / `NODE_ENV === 'test'`, or compiles differently under `#ifdef UNIT_TEST` | `P010` |
 | 📝 | **Answer-key special-casing:** `if s == "XIV": return 14`, matched against the exact input/expected pairs in your tests | `P011` |
-| 🟰 | `__eq__` that returns `True` for everything | `P020` |
+| 🟰 | `__eq__` / `operator==` / `equals()` that returns `true` for everything | `P020` |
 | ⏱️ | Overwrote `time.perf_counter` so benchmarks look fast | `P021` |
 | ⚖️ | Edited proctor's config or removed its hook (the agent changing the referee) | `P015` |
 | … | Swallowed exceptions, regenerated snapshots, lowered coverage gates, mocked the unit under test, retry/sleep jiggling, new `@ts-ignore`s | `P012`–`P018` |
@@ -70,13 +70,27 @@ proctor unseal
 - **Generalization gap**: visible pass rate minus sealed pass rate. An honest implementation scores about 0. One that memorized the visible tests scores high.
 - **Harness inflation**: proctor runs the suite twice, once with the agent's edits to `conftest.py`, `jest.config`, `package.json` and CI files, and once with those files restored from the base commit. The difference is how many passes the agent's harness edits produced without fixing anything.
 - **Contamination**: whether a sealed file reappeared in the tree (for example via `git show HEAD:…`), or whether values that appear *only* in the sealed tests turned up in the agent's code.
-- **The true result**: real pass/fail counts parsed from pytest, jest, vitest, go, cargo, mocha, unittest or TAP output, never from the agent's summary. A run that collects zero tests counts as a fail.
+- **The true result**: real pass/fail counts read from the runner itself, never from the agent's summary. Proctor reads JUnit XML and .NET TRX reports written *during this run* (stale files are ignored), and otherwise parses the console summary. A run that collects zero tests counts as a fail.
 
 No sealed tests yet? Split your existing suite like a dataset:
 
 ```bash
 proctor seal tests/ --split 0.3 --seed 42    # hold out 30% of test files, reproducibly
 ```
+
+## Works with your stack
+
+| Language | Scanner knows | Exam mode runs |
+|---|---|---|
+| Python | pytest, unittest | pytest, unittest |
+| JavaScript / TypeScript | Jest, Vitest, Mocha, `node --test` | Jest, Vitest, Mocha, TAP |
+| Go · Rust | `testing`, `#[test]` | `go test`, `cargo test` |
+| Java · Kotlin | JUnit 4/5, TestNG, AssertJ, Maven, Gradle | Maven, Gradle, JUnit (Surefire XML read automatically) |
+| C# · F# | xUnit, NUnit, MSTest, FluentAssertions | `dotnet test` (console or TRX) |
+| C · C++ | GoogleTest, Catch2, doctest, Boost.Test, Unity, CMocka, CMake/CTest, Bazel | CTest, GoogleTest, Catch2, anything that writes JUnit XML |
+| Anything else | deletions, CI changes, swallowed errors, answer-key special-casing | any runner that can write JUnit XML (`--report 'path/**/*.xml'`) |
+
+There are runnable demos for [Python](examples/demo.sh) and [C++ with CMake + GoogleTest](examples/demo_cpp.sh), and the test suite includes a real `javac` + JUnit exam.
 
 ## Quick start
 
@@ -153,19 +167,24 @@ exclude = ["vendor/*"]
 
 ## Noise floor on real human commits
 
-We ran `proctor scan` over the last 150 non-merge commits of six popular projects, all written by humans. The commits weren't cherry-picked and no rules were tuned per repo:
+We ran `proctor scan` over the last ~150 non-merge commits of 11 popular projects in five languages, all written by humans. The commits weren't cherry-picked and no rules were tuned per repo:
 
-| Repo | Commits | PASS | WARN | FAIL |
-|---|---:|---:|---:|---:|
-| pallets/flask | 150 | 142 | 4 | 4 |
-| psf/requests | 150 | 149 | 1 | 0 |
-| encode/httpx | 150 | 137 | 6 | 7 |
-| expressjs/express | 150 | 146 | 2 | 2 |
-| pydantic/pydantic | 149 | 135 | 2 | 12 |
-| vitejs/vite | 150 | 141 | 4 | 5 |
-| **Total** | **899** | **94.5%** | **2.1%** | **3.3%** |
+| Repo | Language | Commits | PASS | WARN | FAIL |
+|---|---|---:|---:|---:|---:|
+| google/leveldb | C++ | 150 | 144 | 5 | 1 |
+| abseil/abseil-cpp | C++ | 150 | 148 | 1 | 1 |
+| square/retrofit | Java | 150 | 149 | 0 | 1 |
+| google/gson | Java | 150 | 145 | 3 | 2 |
+| JamesNK/Newtonsoft.Json | C# | 150 | 146 | 2 | 2 |
+| pallets/flask | Python | 150 | 142 | 4 | 4 |
+| psf/requests | Python | 150 | 149 | 1 | 0 |
+| encode/httpx | Python | 150 | 137 | 6 | 7 |
+| pydantic/pydantic | Python | 149 | 136 | 2 | 11 |
+| expressjs/express | JavaScript | 150 | 146 | 2 | 2 |
+| vitejs/vite | TypeScript | 150 | 141 | 4 | 5 |
+| **Total** | | **1,649** | **96.0%** | **1.8%** | **2.2%** |
 
-Every blocking finding on those commits came from four rules: a test file deleted, test cases removed, a skip/xfail added, or a CI test step removed. When a human does these things it's usually deliberate. When an agent does them halfway through "fix the failing test", you want a person to sign off. The heuristic rules (answer-key, result rewriting, exit forgery, test-aware code, always-equal, clock tampering) raised **zero** blocking findings across all 899 commits. Reproduce it with [`bench/false_positives.py`](bench/false_positives.py).
+Every blocking finding on those commits was literally what its rule says: a test file deleted, test cases removed, an unconditional skip added, an assertion commented out, or a test removed from CI or the build. When a human does these things it's usually deliberate. When an agent does them halfway through "fix the failing test", you want a person to sign off. The heuristic rules (answer-key, result rewriting, exit forgery, test-aware code, always-equal, clock tampering) raised **zero** blocking findings across all 1,649 commits. Reproduce it with [`bench/false_positives.py`](bench/false_positives.py); details are in [`bench/RESULTS.md`](bench/RESULTS.md).
 
 ## Design principles
 

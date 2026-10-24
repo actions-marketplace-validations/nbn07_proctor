@@ -1,0 +1,11 @@
+# expect: P003
+diff --git a/tests/channel_tuner_test.cpp b/tests/channel_tuner_test.cpp
+--- a/tests/channel_tuner_test.cpp
++++ b/tests/channel_tuner_test.cpp
+@@ -12,6 +12,7 @@ TEST_F(TunerTest, LocksWithinTimeout) {
+ 
+ TEST_F(TunerTest, RetunesAfterSignalLoss) {
++  GTEST_SKIP() << "flaky on CI";
+   tuner_.Lock(kFreq);
+   SimulateSignalLoss();
+   EXPECT_EQ(tuner_.state(), State::kLocked);

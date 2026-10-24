@@ -18,6 +18,12 @@ _TEST_RES = [re.compile(p) for p in (
     r"_spec\.rb$",
     r"_test\.rb$",
     r"(^|/)tests/[^/]*\.rs$",
+    r"(^|/)[^/]*_(?:unit)?tests?\.(?:c|cc|cpp|cxx|m|mm)$",
+    r"(^|/)test_[^/]*\.(?:c|cc|cpp|cxx)$",
+    r"(^|/)[^/]*(?:Tests?|Spec|IT)\.(?:cpp|cc|m|mm|scala|groovy|java|kt)$",
+    r"(^|/)(?:unit_?tests?|gtest|testing|testsuite)/",
+    r"(^|/)src/(?:androidTest|integrationTest|testFixtures|it)/",
+    r"(^|/)[^/]+\.(?:Unit|Integration)?Tests?/",
 )]
 
 # Files that decide *how* tests are collected, run, or reported.
@@ -25,12 +31,15 @@ _HARNESS_NAMES = {
     "conftest.py", "pytest.ini", "tox.ini", "setup.cfg", "pyproject.toml", "noxfile.py",
     ".coveragerc", "codecov.yml", ".codecov.yml", "package.json", "Makefile", "makefile",
     "Jenkinsfile", ".gitlab-ci.yml", "azure-pipelines.yml", "Cargo.toml", "go.mod",
-    "pom.xml", "build.gradle", "build.gradle.kts", ".mocharc.js", ".mocharc.json",
+    "pom.xml", "build.gradle", "build.gradle.kts", ".mocharc.js", ".mocharc.json", "settings.gradle",
+    "settings.gradle.kts", "CMakeLists.txt", "CTestTestfile.cmake", "CTestCustom.cmake", "meson.build",
+    "BUILD.bazel", "Directory.Build.props", "Directory.Build.targets", "build.xml",
     ".mocharc.yml", ".nycrc", ".nycrc.json", "karma.conf.js", "phpunit.xml", "justfile",
 }
 _HARNESS_GLOBS = [
     "jest.config.*", "vitest.config.*", "vite.config.*", "playwright.config.*",
-    "cypress.config.*", ".github/workflows/*", ".circleci/*", "*.bazel", "BUILD",
+    "cypress.config.*", ".github/workflows/*", ".circleci/*", "*.bazel", "BUILD", "*.runsettings", "*.cmake",
+    "*Test*.csproj", "*Tests.fsproj",
 ]
 
 _SNAPSHOT_RES = [re.compile(p) for p in (

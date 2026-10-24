@@ -3,5 +3,5 @@ fail_on = "high"
 
 # These files are a detector's test-suite: they *contain* cheat patterns as data.
 # rules.py is the detector's pattern table, so it necessarily spells out every cheat.
-exclude = ["tests/fixtures/*", "tests/test_rules.py", "tests/test_e2e.py", "examples/*", "scripts/hero.sh",
+exclude = ["tests/fixtures/*", "tests/test_rules.py", "tests/test_e2e.py", "tests/test_results.py", "examples/*", "scripts/hero.sh",
            "src/proctor/rules.py", "docs/*"]

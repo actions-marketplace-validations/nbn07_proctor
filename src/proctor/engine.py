@@ -33,6 +33,8 @@ class Config:
     test_command: Optional[str] = None
     holdout_command: Optional[str] = None
     min_holdout_pass: float = 1.0
+    test_report: List[str] = field(default_factory=list)
+    holdout_report: List[str] = field(default_factory=list)
 
     @classmethod
     def load(cls, root: Optional[str], rev: Optional[str] = None) -> "Config":
@@ -77,6 +79,9 @@ class Config:
         cfg.test_command = data.get("test_command")
         cfg.holdout_command = data.get("holdout_command")
         cfg.min_holdout_pass = float(data.get("min_holdout_pass", 1.0))
+        as_list = lambda v: [v] if isinstance(v, str) else list(v or [])
+        cfg.test_report = as_list(data.get("test_report"))
+        cfg.holdout_report = as_list(data.get("holdout_report"))
         return cfg
 
 

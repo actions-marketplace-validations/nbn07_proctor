@@ -1,0 +1,10 @@
+# expect: P007
+diff --git a/build.gradle.kts b/build.gradle.kts
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -20,4 +20,5 @@ dependencies {
+ 
+ tasks.test {
+     useJUnitPlatform()
++    ignoreFailures = true
+ }

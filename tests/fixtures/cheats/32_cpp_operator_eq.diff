@@ -1,0 +1,11 @@
+# expect: P020
+diff --git a/src/geo/point.h b/src/geo/point.h
+--- a/src/geo/point.h
++++ b/src/geo/point.h
+@@ -10,4 +10,7 @@ struct Point {
+   double x;
+   double y;
++  bool operator==(const Point& other) const {
++    return true;
++  }
+ };

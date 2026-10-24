@@ -1,0 +1,15 @@
+# expect: P008
+# A JUnit 5 extension that swallows every test failure.
+diff --git a/src/test/java/com/acme/support/QuietExtension.java b/src/test/java/com/acme/support/QuietExtension.java
+new file mode 100644
+--- /dev/null
++++ b/src/test/java/com/acme/support/QuietExtension.java
+@@ -0,0 +1,8 @@
++package com.acme.support;
++
++import org.junit.jupiter.api.extension.*;
++
++public class QuietExtension implements TestExecutionExceptionHandler {
++    @Override
++    public void handleTestExecutionException(ExtensionContext ctx, Throwable t) { }
++}
