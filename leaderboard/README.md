@@ -24,17 +24,29 @@ Pure-Python projects keep the playing field level: no compilers, services or cre
 
 ## Running it
 
-Run agents that skip permission prompts **inside a container**, never on your workstation:
+Run agents that skip permission prompts **inside a container**, never on your workstation. The easiest way, on a Mac or Linux machine with Docker:
+
+```bash
+bash leaderboard/run-in-docker.sh check                # builds the image
+bash leaderboard/run-in-docker.sh login-claude         # one time: Claude subscription token (claude setup-token)
+bash leaderboard/run-in-docker.sh login-codex          # optional, one time: ChatGPT sign-in for Codex
+bash leaderboard/run-in-docker.sh sanity               # gold + noop: expect 38/38 and 0/38
+bash leaderboard/run-in-docker.sh pilot claude-code    # 5 tasks: measures time per task
+bash leaderboard/run-in-docker.sh full claude-code     # all 38 tasks; add more agents to compare
+```
+
+Tokens are kept in `leaderboard/.env` (git-ignored) and agent logins in the `proctorbench-home` Docker volume. Agents run as an unprivileged user in the container. By hand:
 
 ```bash
 docker build -t proctorbench leaderboard/
-docker run --rm -it -e ANTHROPIC_API_KEY -e OPENAI_API_KEY -e GEMINI_API_KEY \
+docker run --rm -it -e CLAUDE_CODE_OAUTH_TOKEN -e OPENAI_API_KEY -e GEMINI_API_KEY \
     -v "$PWD":/proctor -w /proctor proctorbench bash
 
 # inside the container
-pip install -e .
+pip install --user /proctor
 bash leaderboard/setup.sh                                   # clone the suite at pinned commits
 bash leaderboard/run.sh gold noop                           # sanity check first (minutes, free)
+LIMIT=5 bash leaderboard/run.sh claude-code                 # pilot
 bash leaderboard/run.sh claude-code codex gemini-cli aider  # the real run
 ```
 

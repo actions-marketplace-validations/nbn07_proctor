@@ -13,7 +13,7 @@
     "version": "claude --version"
   },
   "codex": {
-    "cmd": "codex -s workspace-write -a never exec \"$(cat {prompt_file})\"",
+    "cmd": "codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check \"$(cat {prompt_file})\"",
     "version": "codex --version"
   },
   "gemini-cli": {
