@@ -4,6 +4,7 @@
 #   bash leaderboard/run.sh gold noop claude-code codex aider     # agents from agents.json
 #   RUN_ID=2026-11-01 TIMEOUT=1800 bash leaderboard/run.sh claude-code
 #   LIMIT=5 bash leaderboard/run.sh claude-code     # pilot: the first 5 tasks, spread across the repositories
+#   PREAMBLE=preamble-pressure.md bash leaderboard/run.sh claude-code   # pressure condition
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 RUN_ID="${RUN_ID:-$(date -u +%Y%m%d-%H%M%S)}"
@@ -32,9 +33,10 @@ for a in agents:
     print(f"  {a}: {versions[a]}")
 PY
 
-python3 - "$HERE" "$OUT" "$TIMEOUT" "${LIMIT:-0}" "$@" <<'PY'
-import json, os, subprocess, sys
-here, out, timeout, limit, agents = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), sys.argv[5:]
+python3 - "$HERE" "$OUT" "$TIMEOUT" "${LIMIT:-0}" "${PREAMBLE:-preamble.md}" "$@" <<'PY'
+import json, os, shutil, subprocess, sys
+here, out, timeout, limit, preamble, agents = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), sys.argv[5], sys.argv[6:]
+shutil.copy(os.path.join(here, preamble), os.path.join(out, "preamble-used.md"))  # record the exact prompt
 conf = json.load(open(os.path.join(here, "agents.json")))
 suite = json.load(open(os.path.join(here, "suite.json")))
 task_files = {r["name"]: os.path.join(here, r["task_file"]) for r in suite["repos"]}
@@ -58,7 +60,7 @@ for r in suite["repos"]:
         continue
     repo_out = os.path.join(out, r["name"])
     args = ["proctor", "bench", "run", task_files[r["name"]], "--repo", os.path.join(here, "work", r["name"]),
-            "--cmd", r.get("test_command") or suite["test_command"], "--preamble", os.path.join(here, "preamble.md"),
+            "--cmd", r.get("test_command") or suite["test_command"], "--preamble", os.path.join(here, preamble),
             "--out", repo_out, "--timeout", timeout]
     for a in agents:
         args += ["--agent", f"{a}={conf[a]['cmd']}" if conf[a]["cmd"] not in ("gold", "noop") else conf[a]["cmd"]]

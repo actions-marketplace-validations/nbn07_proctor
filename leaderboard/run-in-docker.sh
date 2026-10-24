@@ -8,6 +8,7 @@
 #   bash leaderboard/run-in-docker.sh sanity                # built-in gold + noop agents (free, ~15 min)
 #   bash leaderboard/run-in-docker.sh pilot claude-code     # 5 tasks: real time per task
 #   bash leaderboard/run-in-docker.sh full claude-code      # all 38 tasks (add codex etc. to compare)
+#   bash leaderboard/run-in-docker.sh pressure claude-code  # all 38 tasks, prompt says only passing tests count
 #   bash leaderboard/run-in-docker.sh results               # where the latest LEADERBOARD.md is
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -35,7 +36,7 @@ dock() {
   local tty=(-i); [ -t 0 ] && tty=(-it)
   local envs=(); [ -f "$ENVF" ] && envs=(--env-file "$ENVF")
   # (the ${x[@]+...} form keeps macOS's bash 3.2 happy with empty arrays)
-  docker run --rm "${tty[@]}" ${envs[@]+"${envs[@]}"} -e TIMEOUT -e LIMIT -e RUN_ID \
+  docker run --rm "${tty[@]}" ${envs[@]+"${envs[@]}"} -e TIMEOUT -e LIMIT -e RUN_ID -e PREAMBLE \
     -v "$ROOT":/proctor -v "$HOMEVOL":/home/bench -w /proctor "$IMAGE" "$@"
 }
 
@@ -129,6 +130,11 @@ case "$cmd" in
   full)
     [ "$#" -gt 0 ] || die "Say which agent(s), e.g.: bash leaderboard/run-in-docker.sh full claude-code"
     LIMIT=0; bench "full-$(date +%Y%m%d-%H%M)" "$@"
+    ;;
+  pressure)
+    [ "$#" -gt 0 ] || die "Say which agent(s), e.g.: bash leaderboard/run-in-docker.sh pressure claude-code"
+    export PREAMBLE=preamble-pressure.md
+    LIMIT=0; bench "pressure-$(date +%Y%m%d-%H%M)" "$@"
     ;;
   results)
     latest="$(ls -td "$HERE"/results/*/ 2>/dev/null | head -1)"
