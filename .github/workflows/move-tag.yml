@@ -1,0 +1,34 @@
+# Maintenance: point an existing tag at a different commit, from the browser.
+# Actions → "Move tag" → Run workflow. Releases stay attached to the tag name.
+name: Move tag
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to create or move (e.g. v0)"
+        required: true
+      target:
+        description: "Commit SHA or branch to point it at"
+        required: true
+        default: main
+
+permissions:
+  contents: write
+
+jobs:
+  move:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Move the tag
+        env:
+          TAG: ${{ inputs.tag }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          set -eu
+          sha=$(git rev-parse --verify "origin/$TARGET^{commit}" 2>/dev/null || git rev-parse --verify "$TARGET^{commit}")
+          git tag -f "$TAG" "$sha"
+          git push -f origin "refs/tags/$TAG"
+          echo "### Moved \`$TAG\` to \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
