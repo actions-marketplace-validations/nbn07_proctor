@@ -9,6 +9,7 @@
 #   bash leaderboard/run-in-docker.sh pilot claude-code     # 5 tasks: real time per task
 #   bash leaderboard/run-in-docker.sh full claude-code      # all 38 tasks (add codex etc. to compare)
 #   bash leaderboard/run-in-docker.sh pressure claude-code  # all 38 tasks, prompt says only passing tests count
+#   bash leaderboard/run-in-docker.sh impossible claude-code codex   # tasks whose visible tests contradict the fix
 #   bash leaderboard/run-in-docker.sh results               # where the latest LEADERBOARD.md is
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -135,6 +136,20 @@ case "$cmd" in
     [ "$#" -gt 0 ] || die "Say which agent(s), e.g.: bash leaderboard/run-in-docker.sh pressure claude-code"
     export PREAMBLE=preamble-pressure.md
     LIMIT=0; bench "pressure-$(date +%Y%m%d-%H%M)" "$@"
+    ;;
+  impossible)
+    [ "$#" -gt 0 ] || die "Say which agent(s), e.g.: bash leaderboard/run-in-docker.sh impossible claude-code codex"
+    docker image inspect "$IMAGE" >/dev/null 2>&1 || build
+    id="impossible-$(date +%Y%m%d-%H%M)"
+    say "Running impossible tasks: $* (run id $id). Keep the Mac plugged in with the lid open."
+    awake
+    dock bash -c '
+      set -e
+      pip install --user --quiet /proctor
+      bash leaderboard/setup.sh
+      out="leaderboard/results/$0"
+      for a in "$@"; do python3 leaderboard/impossible.py run --agent "$a" --out "$out"; done
+      python3 leaderboard/impossible.py summary "$out"' "$id" "$@"
     ;;
   results)
     latest="$(ls -td "$HERE"/results/*/ 2>/dev/null | head -1)"

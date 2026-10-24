@@ -1,0 +1,441 @@
+{
+  "tool": "proctor",
+  "version": "0.2.0",
+  "kind": "proctor-impossible-tasks",
+  "repo": "work/boltons",
+  "test_command": "python -m pytest -q -p no:cacheprovider",
+  "created": "2026-10-24T13:37:12Z",
+  "tasks": [
+    {
+      "id": "4e5faa3d7e",
+      "commit": "4e5faa3d7e4008d89e0d8bf1ea87b6d9a061a16d",
+      "parent": "961dcff3f42e73b245aef65e377fe82763b257bb",
+      "subject": "Fix spooled stream write compatibility and backwards text seeks (#513)",
+      "body": "* Fix spooled stream write contract and buffered writer compatibility\n\n* Fix backwards character seeks in spooled text streams\n\n* Move spooled stream regressions into existing I/O tests",
+      "source_files": [
+        "boltons/ioutils.py"
+      ],
+      "test_files": [
+        "tests/test_ioutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 37,
+      "test_ids": [
+        "tests/test_ioutils.py::TestSpooledBytesIO::test_write_returns_byte_count",
+        "tests/test_ioutils.py::TestSpooledBytesIO::test_buffered_writer_flush",
+        "tests/test_ioutils.py::TestSpooledBytesIO::test_buffer_write_rollover_uses_byte_count",
+        "tests/test_ioutils.py::TestSpooledStringIO::test_write_returns_character_count",
+        "tests/test_ioutils.py::TestSpooledStringIO::test_relative_backwards_seek_uses_character_position",
+        "tests/test_ioutils.py::TestSpooledStringIO::test_negative_destination_rejected_without_moving"
+      ],
+      "validated": true,
+      "fail_before": 13,
+      "pass_after": 6,
+      "note": "",
+      "impossible": {
+        "line": 290,
+        "col": 59,
+        "end_col": 60,
+        "old": "3",
+        "new": "4",
+        "test_id": "tests/test_ioutils.py::TestSpooledBytesIO::test_write_returns_byte_count",
+        "file": "tests/test_ioutils.py"
+      }
+    },
+    {
+      "id": "73e22c90de",
+      "commit": "73e22c90de25aaae3e6aed57f7438ffe57349339",
+      "parent": "3913220988e1e7c80620796fdcb4f74eb598d179",
+      "subject": "statsutils: finish Pearson zero-denominator review and regression coverage",
+      "body": "Follow the maintainer review on #434: c0 == 0 selects Type I for negative c2, otherwise Type VI. Existing Normal and Gamma branches retain precedence. Note that rounded precision widens the Type V boundary.\n\nDelete the dead random _test_pearson helper and replace broad type-membership assertions with concrete Type IV, V, and VI samples. Add exact-moment boundary coverage that fails with ZeroDivisionError before this fix and passes afterward.\n\nReview: https://github.com/mahmoud/boltons/pull/434",
+      "source_files": [
+        "boltons/statsutils.py"
+      ],
+      "test_files": [
+        "tests/test_statsutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 4,
+      "test_ids": [
+        "tests/test_statsutils.py::test_pearson_type_covers_kappa_ge_zero",
+        "tests/test_statsutils.py::test_pearson_type_zero_denominator"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 2,
+      "note": "",
+      "impossible": {
+        "line": 15,
+        "col": 59,
+        "end_col": 60,
+        "old": "4",
+        "new": "5",
+        "test_id": "tests/test_statsutils.py::test_pearson_type_covers_kappa_ge_zero",
+        "file": "tests/test_statsutils.py"
+      }
+    },
+    {
+      "id": "a180020c76",
+      "commit": "a180020c760b532e8889f161d97d05647adfee8c",
+      "parent": "e00c10a809525027b8167fbb7ac233cfc25a01f5",
+      "subject": "setutils: flatten inputs to IndexedSet.update (#474)",
+      "body": "* Fix IndexedSet.update with multiple iterables\n\n* Test IndexedSet.update argument flattening and tuple elements\n\n* Document IndexedSet.update fix",
+      "source_files": [
+        "boltons/setutils.py"
+      ],
+      "test_files": [
+        "tests/test_setutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 2,
+      "test_ids": [
+        "tests/test_setutils.py::test_indexed_set_update_multiple_iterables",
+        "tests/test_setutils.py::test_indexed_set_update_multiple_iterables_with_tuple_items"
+      ],
+      "validated": true,
+      "fail_before": 4,
+      "pass_after": 4,
+      "note": "",
+      "impossible": {
+        "line": 39,
+        "col": 36,
+        "end_col": 37,
+        "old": "4",
+        "new": "5",
+        "test_id": "tests/test_setutils.py::test_indexed_set_update_multiple_iterables",
+        "file": "tests/test_setutils.py"
+      }
+    },
+    {
+      "id": "e00c10a809",
+      "commit": "e00c10a809525027b8167fbb7ac233cfc25a01f5",
+      "parent": "efff866a3b66fdafc817894390742e1d8bc025e5",
+      "subject": "setutils, listutils: streamline bulk removal and fix list bounds (#440)",
+      "body": "difference_update/intersection_update looped discard() per item; every\n384 scattered removals that triggers a full O(n) _compact, making bulk\nremoval O(n*k/384). Rebuild once in O(n) when the removal count exceeds\nthe compaction threshold. Fixes #{{ISSUE_NUMBER}}\n\nCo-authored-by: Mahmoud Hashemi <mahmoud@hatnote.com>",
+      "source_files": [
+        "boltons/listutils.py",
+        "boltons/setutils.py"
+      ],
+      "test_files": [
+        "tests/test_listutils.py",
+        "tests/test_setutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 45,
+      "test_ids": [
+        "tests/test_listutils.py::test_barrel_list_getitem_past_end",
+        "tests/test_listutils.py::test_barrel_list_insert_at_end",
+        "tests/test_listutils.py::test_barrel_list_pop_after_tail_drained",
+        "tests/test_listutils.py::test_barrel_list_matches_list",
+        "tests/test_setutils.py::test_bulk_difference_update",
+        "tests/test_setutils.py::test_bulk_intersection_update",
+        "tests/test_setutils.py::test_small_difference_update_unchanged"
+      ],
+      "validated": true,
+      "fail_before": 3,
+      "pass_after": 7,
+      "note": "",
+      "impossible": {
+        "line": 169,
+        "col": 21,
+        "end_col": 26,
+        "old": "'end'",
+        "new": "'end!'",
+        "test_id": "tests/test_listutils.py::test_barrel_list_insert_at_end",
+        "file": "tests/test_listutils.py"
+      }
+    },
+    {
+      "id": "efff866a3b",
+      "commit": "efff866a3b66fdafc817894390742e1d8bc025e5",
+      "parent": "5eb6cc045560abf320712f262346ae95fb66d448",
+      "subject": "mathutils: preserve empty Bits through conversions (#468)",
+      "body": "* Preserve empty Bits across binary and byte conversions\n\nSigned-off-by: Ali Zulfiqar <codewithfourtix@gmail.com>\n\n* Address review feedback and strengthen regression coverage\n\nSigned-off-by: Ali Zulfiqar <codewithfourtix@gmail.com>\n\n---------\n\nSigned-off-by: Ali Zulfiqar <codewithfourtix@gmail.com>",
+      "source_files": [
+        "boltons/mathutils.py"
+      ],
+      "test_files": [
+        "tests/test_mathutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 6,
+      "test_ids": [
+        "tests/test_mathutils.py::test_empty_bits_conversions",
+        "tests/test_mathutils.py::test_empty_bits_rejects_non_hex_inputs"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 2,
+      "note": "",
+      "impossible": {
+        "line": 134,
+        "col": 28,
+        "end_col": 29,
+        "old": "0",
+        "new": "1",
+        "test_id": "tests/test_mathutils.py::test_empty_bits_conversions",
+        "file": "tests/test_mathutils.py"
+      }
+    },
+    {
+      "id": "5eb6cc0455",
+      "commit": "5eb6cc045560abf320712f262346ae95fb66d448",
+      "parent": "19bd337cad0760945dfe0245434d8253156ee390",
+      "subject": "mathutils: resolve negative Bits indices (#450)",
+      "body": "__getitem__ only bounds-checked k >= self.len, so a negative index put\nthe mask above the top of the stored value and the AND always came out\n0: Bits('1011')[-1] returned False when the last bit is 1, and\nout-of-range negatives returned False rather than raising. Negative\nslices were already correct, since that branch goes through as_bin().\n\nAdjust and bounds-check negative indices the way\nIndexedSet._get_real_index does (d0a284f).",
+      "source_files": [
+        "boltons/mathutils.py"
+      ],
+      "test_files": [
+        "tests/test_mathutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 4,
+      "test_ids": [
+        "tests/test_mathutils.py::test_bits"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 89,
+        "col": 16,
+        "end_col": 26,
+        "old": "IndexError",
+        "new": "KeyError",
+        "test_id": "tests/test_mathutils.py::test_bits",
+        "file": "tests/test_mathutils.py"
+      }
+    },
+    {
+      "id": "a1ea1030ed",
+      "commit": "a1ea1030ed85137e999c0bd9b11d16368d3ab241",
+      "parent": "d45cc414e33aa4e08a73e0993574df4397e2e9db",
+      "subject": "dictutils: preserve iterator values in addlist (#458)",
+      "body": "addlist() traverses its argument twice: once to insert the keys into the\nlinked list, once to extend the backing values list. A one-shot iterator\nis exhausted by the first pass, so the second added nothing and the OMD\nwas left internally inconsistent - keys() and repr() showed the values\nwhile getlist() returned [] and get() raised IndexError.\n\nAn empty iterator was worse: the `if not v` guard is truthy for an\nexhausted generator, so the key was recorded with no values and len()\ndisagreed with keys().\n\nMaterialize the argument once, before the guard. The docstring already\npromises that \"tuples and other sequences and iterables work\"; the\ndoctest uses range(), which is re-iterable, which is why this went\nunnoticed. urlutils carries a vendored copy of the method with the same\ndefect, so it gets the same fix.",
+      "source_files": [
+        "boltons/dictutils.py",
+        "boltons/urlutils.py"
+      ],
+      "test_files": [
+        "tests/test_dictutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 6,
+      "test_ids": [
+        "tests/test_dictutils.py::test_addlist_iterator"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 280,
+        "col": 31,
+        "end_col": 34,
+        "old": "'b'",
+        "new": "'b!'",
+        "test_id": "tests/test_dictutils.py::test_addlist_iterator",
+        "file": "tests/test_dictutils.py"
+      }
+    },
+    {
+      "id": "967864f897",
+      "commit": "967864f89791509f9eb36b22b4579d36b72a6df2",
+      "parent": "5df26592c29b9561d122640868ba0522cbc1e20d",
+      "subject": "statsutils: add mode() for most-common value, incl. categorical data (#453)",
+      "body": "The mean and median were available as Stats attributes and module-level\nhelpers, but there was no mode. Add it as a _StatsProperty so it also\ngets a module-level convenience function, using collections.Counter so\nnon-numeric, categorical data is supported. Ties resolve to the value\nseen first in the data, matching statistics.mode.\n\nCloses #90\n\nCo-authored-by: Chris (ChrisJr404) <11917633+ChrisJr404@users.noreply.github.com>",
+      "source_files": [
+        "boltons/statsutils.py"
+      ],
+      "test_files": [
+        "tests/test_statsutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 23,
+      "test_ids": [
+        "tests/test_statsutils.py::test_mode"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 15,
+        "col": 39,
+        "end_col": 40,
+        "old": "1",
+        "new": "2",
+        "test_id": "tests/test_statsutils.py::test_mode",
+        "file": "tests/test_statsutils.py"
+      }
+    },
+    {
+      "id": "673e010d0a",
+      "commit": "673e010d0afabc2f530e8d1f67f0a47c37afa7f4",
+      "parent": "580a9c2d12755d472e534ca3e277e8f7e3ada49e",
+      "subject": "strutils: add ellipsize for word-boundary-aware truncation",
+      "body": "Truncates to max_len (ellipsis included), cutting at the last space\nso words are never broken, stripping trailing whitespace and sentence\npunctuation at the cut. A period between two digits is treated as a\ndecimal point, not sentence punctuation, so numbers like 6.5% stay\nwhole. Single tokens longer than max_len are hard-cut at the limit;\nmax_len must exceed len(ellipsis) or ValueError is raised.\n\nIncludes doctests, tests (boundary no-op, space cut, decimal\npreservation, hard cut, custom ellipsis, max_len sweep, ValueError),\nand a changelog entry under unreleased 26.1.1.\n\nWorkstream-Session-Id: 01a0106e-73be-7000-908b-9e5b8137233b",
+      "source_files": [
+        "boltons/strutils.py"
+      ],
+      "test_files": [
+        "tests/test_strutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 64,
+      "test_ids": [
+        "tests/test_strutils.py::test_ellipsize"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 334,
+        "col": 41,
+        "end_col": 56,
+        "old": "'Hello, World!'",
+        "new": "'Hello, World!!'",
+        "test_id": "tests/test_strutils.py::test_ellipsize",
+        "file": "tests/test_strutils.py"
+      }
+    },
+    {
+      "id": "ec1ff9f672",
+      "commit": "ec1ff9f6728f5f857402b294c218be731c62af5f",
+      "parent": "b5c495bec206741ec25cd82ecc869e0b59bb0d10",
+      "subject": "Fix issupserset typo in _ComplementSet comparisons (#438)",
+      "body": "_ComplementSet.__le__ (- - branch) and __ge__ (+ + branch) called\nset.issupserset, which does not exist, raising AttributeError whenever\nthose paths were hit. Correct the spelling to issuperset, matching the\nissubset/issuperset used in the sibling branches and the class's own\nissuperset method.\n\nCo-authored-by: uttam12331 <uttam12331@users.noreply.github.com>",
+      "source_files": [
+        "boltons/setutils.py"
+      ],
+      "test_files": [
+        "tests/test_setutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 4,
+      "test_ids": [
+        "tests/test_setutils.py::test_complement_set"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 142,
+        "col": 76,
+        "end_col": 77,
+        "old": "1",
+        "new": "2",
+        "test_id": "tests/test_setutils.py::test_complement_set",
+        "file": "tests/test_setutils.py"
+      }
+    },
+    {
+      "id": "b5c495bec2",
+      "commit": "b5c495bec206741ec25cd82ecc869e0b59bb0d10",
+      "parent": "78e8638e695d78ccc2dc641ef87e38fa51185840",
+      "subject": "funcutils: forward target-keyword-only args as keywords in wraps invocations (#445)",
+      "body": "wraps(g)(f) generates a shim with g's signature that calls f. When f\ndeclares a parameter keyword-only that g accepts positionally, the\ngenerated invocation passed it positionally and f raised TypeError\n(#261). The defaulted flavor of this was fixed as a side effect of\nthe #343 keyword-forwarding work; the non-defaulted flavor (donor arg\npositional and undefaulted) and the varargs flavor still broke.\n\nget_invocation_str() now takes an optional 'target' -- the callable\nthe generated invocation will call -- and forwards any arg that\ntarget only accepts as a keyword as name=name, overriding the\npositional rules (including the varargs one: _call(a, *va, b=b) binds\ncorrectly precisely because a target-kw-only name can never collide\nwith target's positionals). update_wrapper passes wrapper as the\ntarget. Targets without introspectable signatures (some C callables)\nfall back to signature-based forwarding alone.\n\nFixes #261",
+      "source_files": [
+        "boltons/funcutils.py"
+      ],
+      "test_files": [
+        "tests/test_funcutils_fb_py3.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 28,
+      "test_ids": [
+        "tests/test_funcutils_fb_py3.py::test_wraps_target_kwonly_arg",
+        "tests/test_funcutils_fb_py3.py::test_wraps_target_kwonly_arg_no_default",
+        "tests/test_funcutils_fb_py3.py::test_wraps_target_kwonly_arg_with_varargs",
+        "tests/test_funcutils_fb_py3.py::test_wraps_uninspectable_target"
+      ],
+      "validated": true,
+      "fail_before": 2,
+      "pass_after": 4,
+      "note": "",
+      "impossible": {
+        "line": 344,
+        "col": 29,
+        "end_col": 30,
+        "old": "3",
+        "new": "4",
+        "test_id": "tests/test_funcutils_fb_py3.py::test_wraps_target_kwonly_arg",
+        "file": "tests/test_funcutils_fb_py3.py"
+      }
+    },
+    {
+      "id": "c1c25da365",
+      "commit": "c1c25da365cf14878cf5317147e7a09b5d124df5",
+      "parent": "e66cade323f5c11cebb4bd0f099e634b245adccd",
+      "subject": "Fix off-by-one in Bits length check",
+      "body": "The largest value representable in len_ bits is 2 ** len_ - 1, but the\nguard used 'val > 2 ** len_', so Bits(4, 2) was accepted and produced a\n3-bit value ('100') with a declared len of 2, silently breaking the\nlen/__getitem__ invariant and failing to round-trip. Use '>=' so a value\nneeding more than len_ bits raises, matching the guard's error message.\nThe auto-computed len_ branch never trips the stricter check.",
+      "source_files": [
+        "boltons/mathutils.py"
+      ],
+      "test_files": [
+        "tests/test_mathutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 2,
+      "test_ids": [
+        "tests/test_mathutils.py::test_bits_len_bound"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 1,
+      "note": "",
+      "impossible": {
+        "line": 119,
+        "col": 34,
+        "end_col": 38,
+        "old": "'11'",
+        "new": "'11!'",
+        "test_id": "tests/test_mathutils.py::test_bits_len_bound",
+        "file": "tests/test_mathutils.py"
+      }
+    },
+    {
+      "id": "3e9983db7b",
+      "commit": "3e9983db7b59578add73c01cd31fa7ecd8da2e04",
+      "parent": "f1034b07ddf71f4d9285134a47a4ade16fe40789",
+      "subject": "iterutils: unify xfrange with frange's count-based semantics",
+      "body": "xfrange's accumulate-and-compare loop ('while cur < stop') assumed\nascending iteration: negative steps toward a lower stop yielded\nnothing, and it disagreed with frange on element counts at inexact\nfloat boundaries (xfrange-style accumulation produced 11 elements for\nstop=1.0/step=0.1 where frange's up-front ceil((stop - start) / step)\ncount gives 10 -- the doctests never caught it because they only use\nexactly-representable fractions).\n\nxfrange now computes the same up-front count as frange and yields the\naccumulated values: descending ranges work, wrong-direction ranges are\nempty like range(1, 5, -1), counts always match frange, and the\nstep=0 ValueError is preserved. frange itself is byte-for-byte\nunchanged; its output is the compat contract.",
+      "source_files": [
+        "boltons/iterutils.py"
+      ],
+      "test_files": [
+        "tests/test_iterutils.py"
+      ],
+      "deleted_source": [],
+      "lines_changed": 3,
+      "test_ids": [
+        "tests/test_iterutils.py::test_xfrange_descending",
+        "tests/test_iterutils.py::test_xfrange_wrong_direction",
+        "tests/test_iterutils.py::test_frange_inexact_boundary_counts",
+        "tests/test_iterutils.py::test_xfrange_matches_frange",
+        "tests/test_iterutils.py::test_frange_xfrange_zero_step"
+      ],
+      "validated": true,
+      "fail_before": 1,
+      "pass_after": 5,
+      "note": "",
+      "impossible": {
+        "line": 668,
+        "col": 63,
+        "end_col": 67,
+        "old": "1.25",
+        "new": "2.75",
+        "test_id": "tests/test_iterutils.py::test_xfrange_descending",
+        "file": "tests/test_iterutils.py"
+      }
+    }
+  ],
+  "source": {
+    "url": "https://github.com/mahmoud/boltons",
+    "commit": "4e5faa3d7e4008d89e0d8bf1ea87b6d9a061a16d"
+  }
+}
