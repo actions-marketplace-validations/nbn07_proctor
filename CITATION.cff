@@ -12,6 +12,7 @@ type: software
 authors:
   - given-names: Naveen Babu
     family-names: Narayanan Nair
+    orcid: "https://orcid.org/0009-0001-1425-498X"
 version: 0.2.0
 date-released: 2026-10-24
 license: Apache-2.0

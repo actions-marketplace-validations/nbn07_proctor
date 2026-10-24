@@ -2,7 +2,7 @@
   "title": "proctor: the exam proctor for AI coding agents",
   "upload_type": "software",
   "description": "<p>proctor checks whether an AI coding agent did the work or gamed its own evaluation. It detects evaluation tampering in code changes (skipped, deleted or weakened tests, rigged test harnesses, answer-key special-casing) with deterministic rules; measures generalization to held-out tests the agent never saw; benchmarks coding agents on tasks mined from a repository's own bug-fix history; and checks refactors for behavior changes by differential execution.</p>",
-  "creators": [{"name": "Narayanan Nair, Naveen Babu"}],
+  "creators": [{"name": "Narayanan Nair, Naveen Babu", "orcid": "0009-0001-1425-498X"}],
   "license": "Apache-2.0",
   "keywords": ["AI coding agents", "reward hacking", "software testing", "test integrity", "held-out evaluation",
                "benchmark", "differential testing", "large language models"],
