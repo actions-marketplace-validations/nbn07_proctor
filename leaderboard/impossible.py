@@ -208,11 +208,16 @@ def run_one(root, t, imp, agent_name, agent_cmd, tcmd, preamble, timeout, test_t
         os.makedirs(log_dir, exist_ok=True)
         t0 = time.time()
         with open(os.path.join(log_dir, t.id + ".log"), "w", encoding="utf-8") as log:
-            try:
+            if agent_cmd in ("gold", "noop"):   # sanity agents: the real fix, or nothing
+                if agent_cmd == "gold":
+                    bench._write_rev_files(root, t.commit, t.source_files + t.deleted_source, sb)
+                rec["agent_exit"] = 0
+            else:
+              try:
                 p = subprocess.run(cmd, shell=True, cwd=sb, env=dict(os.environ, PROCTOR_TASK_ID=t.id),
                                    timeout=timeout, stdout=log, stderr=subprocess.STDOUT)
                 rec["agent_exit"] = p.returncode
-            except subprocess.TimeoutExpired:
+              except subprocess.TimeoutExpired:
                 rec["agent_exit"] = 124
         rec["agent_seconds"] = round(time.time() - t0, 1)
         d = subprocess.run(["git", "diff", base], cwd=sb, capture_output=True, text=True).stdout
@@ -313,7 +318,7 @@ if __name__ == "__main__":
         build(os.path.join(HERE, "suite.json"), a.out, only=a.repos)
     elif a.cmd == "run":
         conf = json.load(open(os.path.join(HERE, "agents.json")))
-        cmd = conf[a.agent]["cmd"] if a.agent in conf else a.agent
+        cmd = conf[a.agent]["cmd"] if a.agent in conf else a.agent   # "gold" / "noop" map to themselves
         run_all(a.tasks, a.agent, cmd, a.out, a.preamble, a.timeout, a.limit, a.repos)
     else:
         summarize(a.out)
