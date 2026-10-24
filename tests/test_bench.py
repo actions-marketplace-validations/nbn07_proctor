@@ -139,3 +139,41 @@ def test_agent_that_commits_is_still_judged(history, tmp_path):
     files = bench.run_bench(tf, [f"committer={committing_cheater}"], out_dir=str(tmp_path / "out"))
     [row] = bench.summarize(files)
     assert row["flagged"] == 1
+
+
+def test_tests_rewritten_or_deleted_by_the_fix_are_not_regressions(tmp_path):
+    """A fix that changes behavior on purpose also updates or deletes old tests; gold must still resolve."""
+    r = str(tmp_path / "lib")
+    os.makedirs(r)
+    sh("git init -q && git config user.email t@t && git config user.name t", r)
+    write(r, "fmt.py", "def label(n):\n    return 'n=' + str(n)\n")
+    write(r, "tests/test_fmt.py", """
+        from fmt import label
+
+
+        def test_label():
+            assert label(3) == 'n=3'
+
+
+        def test_label_negative():
+            assert label(-1) == 'n=-1'
+    """)
+    sh("git add -A && git commit -qm init", r)
+    write(r, "fmt.py", "def label(n):\n    return f'n = {max(n, 0)}'\n")
+    write(r, "tests/test_fmt.py", """
+        from fmt import label
+
+
+        def test_label():
+            assert label(3) == 'n = 3'
+
+
+        def test_label_clamps_negative():
+            assert label(-1) == 'n = 0'
+    """)
+    sh("git add -A && git commit -qm 'Fix label spacing and clamp negatives'", r)
+    [t] = bench.mine(r)
+    assert bench.removed_test_ids(r, t) == ["tests/test_fmt.py::test_label_negative"]
+    bench.validate(r, t, CMD)
+    a = bench.attempt(r, t, "gold", "gold", CMD)
+    assert a.outcome == "resolved" and a.visible_failed_after == 0

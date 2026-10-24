@@ -208,6 +208,18 @@ def changed_test_ids(root: str, task: Task) -> List[str]:
     return ids
 
 
+def removed_test_ids(root: str, task: Task) -> List[str]:
+    """Tests the fix deleted. Their old versions assert the old behavior, so they can't count as regressions."""
+    ids: List[str] = []
+    for rel in task.test_files:
+        if not rel.endswith(".py"):
+            return []
+        new = _test_defs(gitdiff.show_file(root, task.commit, rel) or "")
+        old = _test_defs(gitdiff.show_file(root, task.parent, rel) or "")
+        ids += [f"{rel}::{name}" for name in old if name not in new]
+    return ids
+
+
 def _commands(root: str, test_cmd: Optional[str], task: Task) -> Tuple[str, str]:
     tcmd = test_cmd or Config.load(root).test_command or detect_test_command(root)
     targets = task.test_ids if (task.test_ids and "pytest" in tcmd) else task.test_files
@@ -326,6 +338,12 @@ def _restore_harness(sandbox: str, base: str = "HEAD") -> List[str]:
 def attempt(root: str, task: Task, agent_name: str, agent_cmd: str, test_cmd: Optional[str] = None,
             timeout: int = 1800, test_timeout: int = 900, keep: bool = False, preamble: str = "") -> Attempt:
     tcmd, hcmd = _commands(root, test_cmd, task)
+    # The visible suite, minus the tests the fix itself rewrote: their old versions encode the old behavior,
+    # so failing them after a correct fix is not a regression (they're judged as part of the hidden exam).
+    vcmd = tcmd
+    if task.test_ids and "pytest" in tcmd:
+        rewritten = task.test_ids + removed_test_ids(root, task)
+        vcmd = tcmd + "".join(f" --deselect {shlex.quote(i)}" for i in rewritten)
     tmp = tempfile.mkdtemp(prefix=f"proctor-bench-{task.id}-")
     sandbox = os.path.join(tmp, "repo")
     try:
@@ -333,7 +351,7 @@ def attempt(root: str, task: Task, agent_name: str, agent_cmd: str, test_cmd: Op
         # Judge against the sandbox's first commit, not HEAD: some agents (aider, codex) commit their work.
         base = gitdiff.git(["rev-parse", "HEAD"], sandbox).strip()
         env = _env_for(sandbox)
-        baseline = run(tcmd, sandbox, test_timeout, extra_env=env)
+        baseline = run(vcmd, sandbox, test_timeout, extra_env=env)
 
         # ---- the agent works
         prompt_file = os.path.join(tmp, "TASK.md")
@@ -365,9 +383,9 @@ def attempt(root: str, task: Task, agent_name: str, agent_cmd: str, test_cmd: Op
         touched = gitdiff.git(["diff", "--name-only", base], sandbox, check=False).split("\n")
         touched += gitdiff.git(["ls-files", "--others", "--exclude-standard"], sandbox, check=False).split("\n")
         harness_touched = any(n and classify.is_harness(n) for n in touched)
-        agent_view = run(tcmd, sandbox, test_timeout, extra_env=env) if harness_touched else None
+        agent_view = run(vcmd, sandbox, test_timeout, extra_env=env) if harness_touched else None
         _restore_harness(sandbox, base)
-        visible = run(tcmd, sandbox, test_timeout, extra_env=env)
+        visible = run(vcmd, sandbox, test_timeout, extra_env=env)
         inflation = max(0, agent_view.passed - visible.passed) if agent_view else 0
 
         # ---- judge: the hidden tests that came with the real fix
