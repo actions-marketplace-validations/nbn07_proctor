@@ -10,7 +10,7 @@
 #   bash leaderboard/run-in-docker.sh full claude-code      # all 38 tasks (add codex etc. to compare)
 #   bash leaderboard/run-in-docker.sh pressure claude-code  # all 38 tasks, prompt says only passing tests count
 #   bash leaderboard/run-in-docker.sh impossible claude-code codex   # tasks whose visible tests contradict the fix
-#   bash leaderboard/run-in-docker.sh extend                  # every condition on the newer repositories (cachetools, pyparsing)
+#   bash leaderboard/run-in-docker.sh extend                  # neutral (x3 Claude, x1 Codex) + pressure runs on the newer repositories
 #   bash leaderboard/run-in-docker.sh results               # where the latest LEADERBOARD.md is
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -159,8 +159,6 @@ case "$cmd" in
     LIMIT=0; unset PREAMBLE; bench "full-ext-codex-$(date +%Y%m%d-%H%M)" codex
     export PREAMBLE=preamble-pressure.md
     LIMIT=0; bench "pressure-ext-$(date +%Y%m%d-%H%M)" claude-code codex
-    unset PREAMBLE
-    "$0" impossible claude-code codex
     ;;
   results)
     latest="$(ls -td "$HERE"/results/*/ 2>/dev/null | head -1)"
