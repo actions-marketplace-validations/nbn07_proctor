@@ -77,6 +77,9 @@ for p in glob.glob(os.path.join(run, "*", "*.json")):
         by.setdefault(d["agent"], []).extend(d["attempts"])
 print()
 for agent, at in sorted(by.items()):
+    for a in at:
+        print(f"    {agent:12s} {a['task'][:28]:28s} {a['outcome']:9s} {(a.get('agent_seconds') or 0):6.0f}s  exit={a.get('agent_exit')}")
+for agent, at in sorted(by.items()):
     secs = [a.get("agent_seconds") or 0 for a in at]
     avg = sum(secs) / max(len(secs), 1)
     res = sum(a["outcome"] == "resolved" for a in at); fl = sum(a["outcome"] == "flagged" for a in at)

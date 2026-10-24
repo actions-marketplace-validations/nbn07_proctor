@@ -336,7 +336,8 @@ def _restore_harness(sandbox: str, base: str = "HEAD") -> List[str]:
 
 
 def attempt(root: str, task: Task, agent_name: str, agent_cmd: str, test_cmd: Optional[str] = None,
-            timeout: int = 1800, test_timeout: int = 900, keep: bool = False, preamble: str = "") -> Attempt:
+            timeout: int = 1800, test_timeout: int = 900, keep: bool = False, preamble: str = "",
+            log_dir: Optional[str] = None) -> Attempt:
     tcmd, hcmd = _commands(root, test_cmd, task)
     # The visible suite, minus the tests the fix itself rewrote: their old versions encode the old behavior,
     # so failing them after a correct fix is not a regression (they're judged as part of the hidden exam).
@@ -366,13 +367,27 @@ def attempt(root: str, task: Task, agent_name: str, agent_cmd: str, test_cmd: Op
                    .replace("{prompt}", shlex.quote(prompt)).replace("{workdir}", shlex.quote(sandbox)))
             agent_env = dict(os.environ, PROCTOR_TASK_ID=task.id, PROCTOR_PROMPT_FILE=prompt_file,
                              PROCTOR_WORKDIR=sandbox, PROCTOR_TEST_COMMAND=tcmd)
+            log = None
+            if log_dir:
+                os.makedirs(log_dir, exist_ok=True)
+                log = open(os.path.join(log_dir, re.sub(r"[^\w.-]+", "_", task.id) + ".log"), "w", encoding="utf-8")
             try:
                 p = subprocess.run(cmd, shell=True, cwd=sandbox, env=agent_env, timeout=timeout,
-                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                   stdout=log or subprocess.DEVNULL, stderr=subprocess.STDOUT if log else subprocess.DEVNULL)
                 agent_exit = p.returncode
             except subprocess.TimeoutExpired:
                 agent_exit = 124
+            finally:
+                if log:
+                    log.close()
         seconds = round(time.time() - t0, 1)
+        if log_dir and agent_cmd not in ("gold", "noop"):
+            # what the agent changed, kept for auditing (tracked files; new files are listed by name)
+            d = subprocess.run(["git", "diff", base], cwd=sandbox, capture_output=True, text=True).stdout
+            new_files = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=sandbox,
+                                       capture_output=True, text=True).stdout.split()
+            with open(os.path.join(log_dir, re.sub(r"[^\w.-]+", "_", task.id) + ".diff"), "w", encoding="utf-8") as fh:
+                fh.write(d + "".join(f"# new file: {f}\n" for f in new_files))
 
         # ---- judge: integrity scan of everything the agent changed
         cfg = Config.load(sandbox, rev=base)
@@ -434,7 +449,8 @@ def run_bench(tasks_path: str, agents: List[str], out_dir: str = "bench-results"
         name, cmd = parse_agent(spec)
         attempts = []
         for i, t in enumerate(tasks, 1):
-            a = attempt(root, t, name, cmd, test_cmd, timeout, preamble=preamble)
+            a = attempt(root, t, name, cmd, test_cmd, timeout, preamble=preamble,
+                        log_dir=os.path.join(out_dir, "logs", re.sub(r"[^\w.-]+", "_", name)))
             attempts.append(a)
             if progress:
                 progress(name, i, len(tasks), t, a)

@@ -9,7 +9,7 @@
     "version": "echo built-in"
   },
   "claude-code": {
-    "cmd": "claude -p \"$(cat {prompt_file})\" --dangerously-skip-permissions",
+    "cmd": "claude -p \"$(cat {prompt_file})\" --dangerously-skip-permissions --output-format json",
     "version": "claude --version"
   },
   "codex": {
