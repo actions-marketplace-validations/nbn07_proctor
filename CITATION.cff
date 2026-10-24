@@ -10,8 +10,8 @@ abstract: >-
   history; and checks refactors for behavior changes by differential execution.
 type: software
 authors:
-  - given-names: Naveen
-    family-names: Nair
+  - given-names: Naveen Babu
+    family-names: Narayanan Nair
 version: 0.2.0
 date-released: 2026-10-24
 license: Apache-2.0

@@ -9,7 +9,7 @@ description = "The exam proctor for AI coding agents: catch agents that game the
 readme = "README.md"
 requires-python = ">=3.9"
 license = "Apache-2.0"
-authors = [{ name = "Naveen Nair" }]
+authors = [{ name = "Naveen Babu Narayanan Nair" }]
 keywords = ["ai-agents", "coding-agents", "reward-hacking", "testing", "claude-code", "llm", "ci", "code-review", "goodhart"]
 classifiers = [
   "Development Status :: 4 - Beta",
