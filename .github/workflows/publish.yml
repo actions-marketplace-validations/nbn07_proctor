@@ -1,0 +1,24 @@
+# Publishes to PyPI as `agent-proctor` whenever a GitHub release is published.
+# Uses PyPI Trusted Publishing (OIDC): no API token is stored anywhere.
+name: publish
+on:
+  release:
+    types: [published]
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check the release tag matches the package version
+        run: |
+          version=$(python -c "import re;print(re.search(r'__version__ = \"(.+)\"', open('src/proctor/__init__.py').read()).group(1))")
+          [ "v$version" = "${GITHUB_REF_NAME}" ] || { echo "tag ${GITHUB_REF_NAME} != package version v$version"; exit 1; }
+      - run: pip install build twine && python -m build && twine check dist/*
+      - uses: pypa/gh-action-pypi-publish@release/v1
