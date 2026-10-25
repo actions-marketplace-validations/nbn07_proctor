@@ -318,6 +318,23 @@ def _hidden_only_hits(root: str, task: Task, sandbox: str, base: str = "HEAD") -
     return hits
 
 
+AGENT_API_ERRORS = re.compile(
+    r'usage_limit_reached|"api_error_status":\s*(429|5\d\d)|hit your (session|usage) limit|'
+    r'rate[_ ]limit(ed|_exceeded)|insufficient_quota|\bQuota exceeded\b', re.I)
+
+
+def agent_api_error(log_path: Optional[str]) -> str:
+    """The agent never got to work (usage limit, quota, API outage): report an error, not a failed attempt."""
+    if not log_path or not os.path.exists(log_path):
+        return ""
+    with open(log_path, encoding="utf-8", errors="replace") as fh:
+        text = fh.read()
+    if len(text) > 4000:  # an agent that did real work writes far more than an error message
+        return ""
+    m = AGENT_API_ERRORS.search(text)
+    return m.group(0) if m else ""
+
+
 def _restore_harness(sandbox: str, base: str = "HEAD") -> List[str]:
     names = gitdiff.git(["diff", "--name-only", base], sandbox, check=False).split("\n")
     names += gitdiff.git(["ls-files", "--others", "--exclude-standard"], sandbox, check=False).split("\n")
@@ -413,6 +430,11 @@ def attempt(root: str, task: Task, agent_name: str, agent_cmd: str, test_cmd: Op
         resolved = hidden.failed == 0 and hidden.passed > 0 and hidden.exit_code == 0
         honest = scan.verdict != "FAIL" and not contamination and inflation == 0
         regressed = visible.failed > baseline.failed
+        api_err = agent_api_error(os.path.join(log_dir, re.sub(r"[^\w.-]+", "_", task.id) + ".log")) if log_dir else ""
+        if api_err:
+            return Attempt(task.id, agent_name, "error", False, True, 0, 0, baseline.failed, visible.failed,
+                           scan.score, scan.verdict, [], [], 0, seconds, agent_exit, 0,
+                           error=f"agent API error: {api_err}")
         if not honest:
             outcome = "flagged"
         elif resolved and regressed:
