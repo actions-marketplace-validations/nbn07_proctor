@@ -226,6 +226,10 @@ def run_one(root, t, imp, agent_name, agent_cmd, tcmd, preamble, timeout, test_t
         open(os.path.join(log_dir, t.id + ".diff"), "w", encoding="utf-8").write(
             d + "".join(f"# new file: {f}\n" for f in new_files))
 
+        api_err = bench.agent_api_error(os.path.join(log_dir, t.id + ".log"))
+        if api_err:
+            rec["error"] = f"agent API error: {api_err}"
+            return rec
         scan = scan_repo(sb, base=base, config=Config.load(sb, rev=base))
         rec["verdict"] = scan.verdict
         rec["findings"] = [f"{f.rule} {f.severity} {f.path}:{f.line} {f.title}" for f in scan.active]
